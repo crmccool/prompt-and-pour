@@ -12,6 +12,7 @@ const statuses = ["Idea", "In Progress", "In Use", "Needs Help"];
 
 const state = {
   loggedIn: false,
+  role: "member",
   route: "login",
   selectedCategory: "All",
   selectedStatus: "All",
@@ -114,7 +115,11 @@ const mockProjects = [
 ];
 
 function setRoute(route, projectId = null) {
-  state.route = route;
+  if (route === "admin" && state.role !== "admin") {
+    state.route = "dashboard";
+  } else {
+    state.route = route;
+  }
   state.selectedProjectId = projectId;
   render();
 }
@@ -133,7 +138,7 @@ function topNav() {
           ${navButton("Home", "dashboard")}
           ${navButton("House Pours", "gallery")}
           ${navButton("Share a Build", "share")}
-          ${navButton("Admin", "admin")}
+          ${state.role === "admin" ? navButton("Admin", "admin") : ""}
           ${navButton("House Rules", "rules")}
           <button onclick="logout()">Exit</button>
         </nav>
@@ -172,14 +177,17 @@ function projectCard(project, showFlags = false) {
     <article class="card">
       <h3>${project.title}</h3>
       <p>${project.summary}</p>
-      <p class="muted">By ${project.creatorName}${project.contactEmail ? ` • ${project.contactEmail}` : ""}</p>
+      <p class="muted"><strong>Creator:</strong> ${project.creatorName}${project.contactEmail ? ` • ${project.contactEmail}` : ""}</p>
+      <p class="muted"><strong>Tools:</strong> ${project.toolsUsed}</p>
       <div class="badges">
         ${project.categories.map((c) => `<span class="badge">${c}</span>`).join("")}
         <span class="badge status">${project.status}</span>
         ${project.featured ? '<span class="badge">House Favorite</span>' : ""}
         ${showFlags ? `<span class="badge">${project.approved ? "approved" : "pending"}</span><span class="badge">${project.archived ? "archived" : "active"}</span>` : ""}
       </div>
-      <button class="button" onclick="setRoute('project', '${project.id}')">View Project</button>
+      ${project.helpWanted ? `<p class="meta-line"><strong>Help wanted:</strong> ${project.helpWanted}</p>` : ""}
+      ${project.reusePermission ? `<p class="meta-line"><strong>Reuse:</strong> ${project.reusePermission}</p>` : ""}
+      <button class="button" onclick="setRoute('project', '${project.id}')">View Pour</button>
     </article>
   `;
 }
@@ -190,10 +198,16 @@ function loginPage() {
       <section class="panel login-card">
         <h1>Prompt & Pour</h1>
         <p class="muted">A private backroom for practical AI experiments, shared by peers.</p>
-        <p>Enter the house passphrase to step inside.</p>
+        <p>Enter the house passphrase and choose your mock role.</p>
         <form onsubmit="event.preventDefault(); login();">
           <label>Passphrase
             <input type="password" required placeholder="••••••••" />
+          </label>
+          <label>Mock role
+            <select id="mock-role">
+              <option value="member">member</option>
+              <option value="admin">admin</option>
+            </select>
           </label>
           <button class="button" type="submit">Enter the Room</button>
         </form>
@@ -209,24 +223,32 @@ function dashboardPage() {
   const favorites = approved.filter((p) => p.featured);
 
   return `
-    <section class="panel hero">
-      <h1>Welcome to Prompt & Pour</h1>
-      <p class="muted">Private, practical, and peer-powered. Pull up a chair and swap what works.</p>
+    <section class="panel hero deco-border">
+      <h1>A quiet room for people figuring out AI before the playbook exists.</h1>
+      <p class="muted">Prompt & Pour is a private, unofficial peer space for sharing practical AI experiments: rough builds, prompts, workflows, lessons learned, and calls for help.</p>
+      <p class="muted">Bring what works, bring what broke, bring what you're still mixing. The point is momentum, not polish.</p>
+      <button class="button" onclick="setRoute('gallery')">Browse House Pours</button>
     </section>
 
-    <section class="panel">
-      <h2>Fresh Pours</h2>
-      <div class="grid">${fresh.map((p) => projectCard(p)).join("")}</div>
+    <section class="panel callout deco-border">
+      <h2>No empty glasses.</h2>
+      <p>The passphrase should travel by trust, not broadcast. Share it with people who are ready to pour something into the room — a build, a prompt, a workflow, a rough mix, a useful question, a lesson learned, or a helping hand.</p>
+    </section>
+
+    <section class="panel section-featured">
+      <h2>House Favorites</h2>
+      <div class="grid">${favorites.map((p) => projectCard(p)).join("") || "<p>No featured cards yet.</p>"}</div>
     </section>
 
     <section class="panel" style="margin-top:1rem;">
-      <h2>House Favorites</h2>
-      <div class="grid">${favorites.map((p) => projectCard(p)).join("") || "<p>No featured cards yet.</p>"}</div>
+      <h2>Fresh Pours</h2>
+      <p class="muted">Recently added approved pours from the room.</p>
+      <div class="grid">${fresh.map((p) => projectCard(p)).join("")}</div>
     </section>
   `;
 }
 
-function galleryPage() {
+function galleryPage() { /* unchanged mostly */
   const visible = mockProjects.filter((p) => p.approved && !p.archived && matchesFilters(p));
   return `
     <section class="panel hero">
@@ -321,46 +343,30 @@ function adminPage() {
 }
 
 function rulesPage() {
-  return `
-    <section class="panel">
-      <h1>House Rules</h1>
-      <p class="rule-quote">“No empty glasses.
-The passphrase should travel by trust, not broadcast. Share it with people who are ready to pour something into the room — a build, a prompt, a workflow, a rough mix, a useful question, a lesson learned, or a helping hand. Prompt & Pour works best when everyone adds something to the house menu.”</p>
-      <ul>
-        <li>Prompt & Pour is an informal peer space, not an official help desk, policy source, approval pathway, or endorsement channel.</li>
-        <li>Do not post confidential, regulated, patient, student, personnel, proprietary, or otherwise sensitive information.</li>
-        <li>Keep examples de-identified.</li>
-        <li>Credit people when borrowing or adapting their prompts, workflows, code, or ideas.</li>
-        <li>Rough work is welcome. Nothing needs to be polished to be useful.</li>
-      </ul>
-    </section>
-  `;
+  return `<section class="panel"><h1>House Rules</h1><p class="rule-quote">No empty glasses.</p></section>`;
 }
 
-function login() { state.loggedIn = true; setRoute("dashboard"); }
-function logout() { state.loggedIn = false; setRoute("login"); }
+function login() {
+  const roleField = document.getElementById("mock-role");
+  state.role = roleField?.value === "admin" ? "admin" : "member";
+  state.loggedIn = true;
+  setRoute("dashboard");
+}
+function logout() { state.loggedIn = false; state.role = "member"; setRoute("login"); }
 function setCategoryFilter(value) { state.selectedCategory = value; render(); }
 function setStatusFilter(value) { state.selectedStatus = value; render(); }
 
 function render() {
   const app = document.getElementById("app");
   let content = "";
-
   if (!state.loggedIn) {
     content = loginPage();
   } else {
-    const pages = {
-      dashboard: dashboardPage,
-      gallery: galleryPage,
-      share: sharePage,
-      admin: adminPage,
-      rules: rulesPage,
-      project: projectDetailPage,
-    };
-    const page = pages[state.route] || dashboardPage;
+    const pages = { dashboard: dashboardPage, gallery: galleryPage, share: sharePage, admin: adminPage, rules: rulesPage, project: projectDetailPage };
+    const safeRoute = state.route === "admin" && state.role !== "admin" ? "dashboard" : state.route;
+    const page = pages[safeRoute] || dashboardPage;
     content = `<div class="layout">${topNav()}<main class="main">${page()}</main></div>`;
   }
-
   app.innerHTML = content;
 }
 
