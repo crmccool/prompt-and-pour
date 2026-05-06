@@ -48,8 +48,8 @@ Because this is a static app, Vercel should generate `supabase.config.local.js` 
    npm run build
    ```
 
-   This runs `node scripts/write-supabase-config.js`, which creates `public/`, copies static app files, and writes `public/supabase.config.local.js` when both values are present.
-4. Build output is written to `public/` (created by the build script and used by Vercel as the output directory).
+   This runs `node scripts/write-supabase-config.js`, which writes `supabase.config.local.js` at the project root when both values are present.
+4. Vercel output is set to the project root (`.`), so static files are served directly without copy steps.
 
 If either environment variable is missing, config generation is skipped and the app keeps using mock fallback behavior.
 
@@ -76,3 +76,13 @@ This project shares a Supabase instance with Publications Lookup.
 - Real authentication (still mock passphrase + mock role selector).
 - Real admin moderation actions (no client-side approve/update/delete yet).
 - Real file uploads.
+
+## Static smoke check
+
+Run this quick check before deploy:
+
+```bash
+npm run smoke:static
+```
+
+It verifies required static files exist, `index.html` is non-empty, and `app.js` passes `node --check`.
