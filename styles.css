@@ -312,3 +312,20 @@ form { display: grid; gap: 0.75rem; }
     display: none;
   }
 }
+
+#app { min-height: 100vh; }
+
+.static-fallback {
+  margin: 2rem auto;
+}
+
+.runtime-error pre {
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(184, 146, 82, 0.35);
+  padding: 0.75rem;
+  border-radius: 4px;
+  color: #ffe7c2;
+}
