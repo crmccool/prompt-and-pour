@@ -48,8 +48,8 @@ Because this is a static app, Vercel should generate `supabase.config.local.js` 
    npm run build
    ```
 
-   This runs `node scripts/write-supabase-config.js`, which writes `supabase.config.local.js` at the project root when both values are present.
-4. No output/build directory is required; this project is plain static HTML/CSS/JS served from the root.
+   This runs `node scripts/write-supabase-config.js`, which creates `public/`, copies static app files, and writes `public/supabase.config.local.js` when both values are present.
+4. Build output is written to `public/` (created by the build script and used by Vercel as the output directory).
 
 If either environment variable is missing, config generation is skipped and the app keeps using mock fallback behavior.
 
