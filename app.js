@@ -54,28 +54,38 @@ const state = {
   selectedProjectId: null,
   projects: [...mockProjects],
   dataSource: "mock",
+  dataStatusReason: "Supabase not checked yet.",
   notice: "",
 };
 
 function getSupabaseClient() {
   const supabaseConfig = window.PROMPT_POUR_SUPABASE_CONFIG;
+  console.info("[Prompt & Pour] Supabase config object exists:", Boolean(supabaseConfig));
+  console.info("[Prompt & Pour] Supabase URL present:", Boolean(supabaseConfig && supabaseConfig.url));
+  console.info("[Prompt & Pour] Supabase anon key present:", Boolean(supabaseConfig && supabaseConfig.anonKey));
+  console.info("[Prompt & Pour] Supabase SDK window.supabase exists:", Boolean(window.supabase));
   const hasConfig = Boolean(supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey);
   const hasFactory = Boolean(window.supabase && typeof window.supabase.createClient === "function");
 
   if (!hasConfig) {
-    console.info("Supabase config missing; using mock data fallback.");
+    state.dataStatusReason = "Missing Supabase config URL or anon key.";
+    console.warn("[Prompt & Pour] Supabase config missing; using mock data fallback.");
     return null;
   }
 
   if (!hasFactory) {
-    console.warn("Supabase SDK unavailable; using mock data fallback.");
+    state.dataStatusReason = "Supabase SDK missing on window.supabase.";
+    console.warn("[Prompt & Pour] Supabase SDK unavailable; using mock data fallback.");
     return null;
   }
 
   try {
-    return window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+    const client = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+    console.info("[Prompt & Pour] Supabase createClient succeeded.");
+    return client;
   } catch (error) {
-    console.error("Supabase client initialization failed; using mock fallback.", error);
+    state.dataStatusReason = `Supabase client init failed: ${error instanceof Error ? error.message : String(error)}`;
+    console.error("[Prompt & Pour] Supabase client initialization failed; using mock fallback.", error);
     return null;
   }
 }
@@ -110,6 +120,9 @@ async function loadProjects() {
   const supabase = getSupabaseClient();
 
   if (!supabase) {
+    state.projects = [...mockProjects];
+    state.dataSource = "mock";
+    render();
     return;
   }
 
@@ -122,17 +135,21 @@ async function loadProjects() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Supabase read failed; using mock fallback:", error);
+      console.error("[Prompt & Pour] Supabase initial select failed; using mock fallback:", error);
       state.projects = [...mockProjects];
       state.dataSource = "mock";
+      state.dataStatusReason = `Initial read failed: ${error.message || "Unknown Supabase read error."}`;
     } else {
+      console.info("[Prompt & Pour] Supabase initial select succeeded.");
       state.projects = data.map(mapRowToProject);
       state.dataSource = "supabase";
+      state.dataStatusReason = "Connected to Supabase.";
     }
   } catch (error) {
-    console.error("Unexpected load failure; using mock fallback:", error);
+    console.error("[Prompt & Pour] Unexpected load failure; using mock fallback:", error);
     state.projects = [...mockProjects];
     state.dataSource = "mock";
+    state.dataStatusReason = `Unexpected read failure: ${error instanceof Error ? error.message : String(error)}`;
   }
 
   render();
@@ -141,6 +158,7 @@ async function loadProjects() {
 function setRoute(route, projectId = null) { state.route = route === "admin" && state.role !== "admin" ? "dashboard" : route; state.selectedProjectId = projectId; render(); }
 const navButton = (label, route) => `<button class="${state.route === route ? "active" : ""}" onclick="setRoute('${route}')">${label}</button>`;
 function topNav() { if (!state.loggedIn) return ""; return `<header class="topbar"><div class="topbar-row"><div class="brand">Prompt & Pour <small>Private Exchange</small></div><nav class="nav">${navButton("Home", "dashboard")}${navButton("House Pours", "gallery")}${navButton("Share a Build", "share")}${state.role === "admin" ? navButton("Admin", "admin") : ""}${navButton("House Rules", "rules")}<button onclick="logout()">Exit</button></nav></div></header>`; }
+function dataStatusPill() { const connected = state.dataSource === "supabase"; const label = connected ? "Supabase connected" : `Mock fallback: ${state.dataStatusReason}`; return `<aside class="data-status ${connected ? "ok" : "warn"}" role="status" aria-live="polite"><strong>Data mode:</strong> ${label}</aside>`; }
 function filterControls() { return `<div class="filters"><label>Category<select onchange="setCategoryFilter(this.value)"><option>All</option>${categories.map((c) => `<option ${c === state.selectedCategory ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Status<select onchange="setStatusFilter(this.value)"><option>All</option>${statuses.map((s) => `<option ${s === state.selectedStatus ? "selected" : ""}>${s}</option>`).join("")}</select></label></div>`; }
 const matchesFilters = (project) => (state.selectedCategory === "All" || project.categories.includes(state.selectedCategory)) && (state.selectedStatus === "All" || project.status === state.selectedStatus);
 function projectCard(project, showFlags = false) { return `<article class="card"><h3>${project.title}</h3><div class="title-rule"></div><p>${project.summary}</p><p class="muted"><strong>Creator:</strong> ${project.creatorName}${project.contactEmail ? ` • ${project.contactEmail}` : ""}</p><p class="muted"><strong>Tools:</strong> ${project.toolsUsed}</p><div class="badges">${project.categories.map((c) => `<span class="badge">${c}</span>`).join("")}<span class="badge status">${project.status}</span>${project.featured ? '<span class="badge">House Favorite</span>' : ""}${showFlags ? `<span class="badge">${project.approved ? "approved" : "pending"}</span><span class="badge">${project.archived ? "archived" : "active"}</span>` : ""}</div>${project.helpWanted ? `<p class="meta-line"><strong>Help wanted:</strong> ${project.helpWanted}</p>` : ""}${project.reusePermission ? `<p class="meta-line"><strong>Reuse:</strong> ${project.reusePermission}</p>` : ""}<button class="button" onclick="setRoute('project', '${project.id}')">View Pour</button></article>`; }
@@ -149,9 +167,10 @@ function dashboardPage() { const approved = state.projects.filter((p) => p.appro
 function galleryPage() { const visible = state.projects.filter((p) => p.approved && !p.archived && matchesFilters(p)); return `<section class="panel hero"><h1 class="section-title">House Pours</h1><p class="muted">Browse approved builds from around the room.</p>${filterControls()}<div class="grid">${visible.map((p) => projectCard(p)).join("") || "<p>No matching pours yet.</p>"}</div></section>`; }
 function sharePage() { const modeNote = state.dataSource === "supabase" ? "Submissions are reviewed before they are poured publicly." : "Supabase is not configured here, so this submit stays in local mock mode."; return `<section class="panel hero"><h1 class="section-title">Share a Build</h1><p class="muted">Rough drafts welcome — usefulness beats polish.</p><p class="muted">${modeNote}</p>${state.notice ? `<p class='muted'><strong>${state.notice}</strong></p>` : ""}<form onsubmit="event.preventDefault(); submitPour(event);"><div class="two-col"><label>Title<input name="title" required placeholder="What are you building?" /></label><label>Creator Name<input name="creatorName" required placeholder="Your name" /></label></div><label>Summary<textarea name="summary" placeholder="Quick description"></textarea></label><div class="two-col"><label>Category<select name="category">${categories.map((c) => `<option>${c}</option>`).join("")}</select></label><label>Status<select name="status">${statuses.map((s) => `<option>${s}</option>`).join("")}</select></label></div><label>Tools Used<input name="toolsUsed" placeholder="e.g., ChatGPT, Python" /></label><label>Problem Being Solved<textarea name="problemSolved"></textarea></label><label>How AI Helped<textarea name="howAiHelped"></textarea></label><label>Lessons Learned<textarea name="lessonsLearned"></textarea></label><label>Help Wanted<textarea name="helpWanted"></textarea></label><label>Reusable Bits / Prompt / Code Notes<textarea name="reusableBits"></textarea></label><label>Links<input name="links" placeholder="https://..." /></label><button class="button" type="submit">Share a Build</button></form></section>`; }
 async function submitPour(event) { const form = event.target; const formData = new FormData(form); const payload = { title: formData.get("title")?.toString().trim(), creator_name: formData.get("creatorName")?.toString().trim(), summary: formData.get("summary")?.toString().trim(), categories: [formData.get("category")?.toString() || "Other / Not sure"], status: formData.get("status")?.toString() || "Idea", tools_used: formData.get("toolsUsed")?.toString().trim(), problem_solved: formData.get("problemSolved")?.toString().trim(), how_ai_helped: formData.get("howAiHelped")?.toString().trim(), lessons_learned: formData.get("lessonsLearned")?.toString().trim(), help_wanted: formData.get("helpWanted")?.toString().trim(), reusable_bits: formData.get("reusableBits")?.toString().trim(), links: (formData.get("links")?.toString().trim() ? [formData.get("links").toString().trim()] : []), approved: false, featured: false, archived: false };
+if (!statuses.includes(payload.status)) payload.status = "Idea";
 const supabase = getSupabaseClient();
-if (supabase) { const { error } = await supabase.from("prompt_pour_pours").insert(payload); if (error) { state.notice = "Could not send your pour right now. Please try again."; } else { state.notice = "Your pour has been sent behind the bar for review."; form.reset(); } render(); return; }
-state.notice = "Mock mode: your pour was captured locally only."; form.reset(); render(); }
+if (supabase) { const { error } = await supabase.from("prompt_pour_pours").insert(payload); if (error) { console.error("[Prompt & Pour] Supabase insert failed:", error); state.notice = `Supabase insert failed: ${error.message || "Unknown error"}`; state.dataSource = "mock"; state.dataStatusReason = `Insert failed: ${error.message || "Unknown Supabase insert error."}`; } else { state.notice = "Your pour has been sent behind the bar for review."; state.dataSource = "supabase"; state.dataStatusReason = "Connected to Supabase."; form.reset(); } render(); return; }
+state.notice = `Mock mode active: submission was not saved to Supabase. Reason: ${state.dataStatusReason}`; form.reset(); render(); }
 function projectDetailPage() { const project = state.projects.find((p) => String(p.id) === String(state.selectedProjectId)); if (!project) return `<section class="panel"><p>Project not found.</p></section>`; return `<section class="panel deco-border"><h1 class="section-title">${project.title}</h1><p class="muted">By ${project.creatorName} • Updated ${project.updatedDate}</p><div class="split"><div><p><strong>Summary:</strong> ${project.summary}</p><p><strong>Problem being solved:</strong> ${project.problemSolved}</p><p><strong>How AI helped:</strong> ${project.howAiHelped}</p><p><strong>Lessons learned:</strong> ${project.lessonsLearned}</p><p><strong>Help wanted:</strong> ${project.helpWanted}</p><p><strong>Reusable bits:</strong> ${project.reusableBits}</p><p><strong>Tools:</strong> ${project.toolsUsed}</p><p><strong>Reuse permission:</strong> ${project.reusePermission}</p></div><aside><div class="screenshot-placeholder">${project.screenshotPlaceholder}</div><p><strong>Links</strong><br/>${project.links.length ? project.links.map((l) => `<a href="${l}">${l}</a>`).join("<br/>") : "None yet"}</p><div class="badges">${project.categories.map((c) => `<span class='badge'>${c}</span>`).join("")}<span class='badge status'>${project.status}</span></div></aside></div></section>`; }
 function adminPage() { const filtered = state.projects.filter(matchesFilters); const pending = filtered.filter((p) => !p.approved && !p.archived); const approved = filtered.filter((p) => p.approved && !p.archived); const featured = filtered.filter((p) => p.featured && !p.archived); const archived = filtered.filter((p) => p.archived); return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><p class="muted">Mock moderation views only (no live approve/update/delete wiring yet).</p>${filterControls()}<h2 class="section-title">Pending</h2><div class="grid">${pending.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div><h2 class="section-title">Approved</h2><div class="grid">${approved.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div><h2 class="section-title">Featured</h2><div class="grid">${featured.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div><h2 class="section-title">Archived</h2><div class="grid">${archived.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div></section>`; }
 function rulesPage() { return `<section class="panel"><h1>House Rules</h1><p class="rule-quote">No empty glasses.</p></section>`; }
@@ -159,7 +178,7 @@ function login() { state.role = document.getElementById("mock-role")?.value === 
 function logout() { state.loggedIn = false; state.role = "member"; state.notice = ""; setRoute("login"); }
 function setCategoryFilter(value) { state.selectedCategory = value; render(); }
 function setStatusFilter(value) { state.selectedStatus = value; render(); }
-function render() { const app = document.getElementById("app"); if (!app) { console.error("#app container not found; cannot render Prompt & Pour."); return; } let content = ""; if (!state.loggedIn) content = loginPage(); else { const pages = { dashboard: dashboardPage, gallery: galleryPage, share: sharePage, admin: adminPage, rules: rulesPage, project: projectDetailPage }; const safeRoute = state.route === "admin" && state.role !== "admin" ? "dashboard" : state.route; content = `<div class="layout">${topNav()}<main class="main">${(pages[safeRoute] || dashboardPage)()}</main></div>`; } app.innerHTML = content; }
+function render() { const app = document.getElementById("app"); if (!app) { console.error("#app container not found; cannot render Prompt & Pour."); return; } let content = ""; if (!state.loggedIn) content = loginPage(); else { const pages = { dashboard: dashboardPage, gallery: galleryPage, share: sharePage, admin: adminPage, rules: rulesPage, project: projectDetailPage }; const safeRoute = state.route === "admin" && state.role !== "admin" ? "dashboard" : state.route; content = `<div class="layout">${topNav()}<main class="main">${(pages[safeRoute] || dashboardPage)()}</main>${dataStatusPill()}</div>`; } app.innerHTML = content; }
 Object.assign(window, { setRoute, login, logout, setCategoryFilter, setStatusFilter, submitPour });
 
 function startApp() {

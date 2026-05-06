@@ -329,3 +329,28 @@ form { display: grid; gap: 0.75rem; }
   border-radius: 4px;
   color: #ffe7c2;
 }
+
+.data-status {
+  position: fixed;
+  right: 0.8rem;
+  bottom: 0.8rem;
+  z-index: 30;
+  max-width: min(460px, calc(100vw - 1.6rem));
+  border-radius: 4px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  background: rgba(6, 12, 21, 0.94);
+  border: 1px solid rgba(184, 146, 82, 0.45);
+  color: var(--muted);
+}
+
+.data-status.ok {
+  border-color: rgba(82, 184, 122, 0.65);
+  color: #b9e8ca;
+}
+
+.data-status.warn {
+  border-color: rgba(184, 146, 82, 0.7);
+  color: #f0d8af;
+}
