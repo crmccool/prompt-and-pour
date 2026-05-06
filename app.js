@@ -133,7 +133,7 @@ function topNav() {
   return `
     <header class="topbar">
       <div class="topbar-row">
-        <div class="brand">Prompt & Pour</div>
+        <div class="brand">Prompt & Pour <small>Private Exchange</small></div>
         <nav class="nav">
           ${navButton("Home", "dashboard")}
           ${navButton("House Pours", "gallery")}
@@ -175,7 +175,7 @@ function matchesFilters(project) {
 function projectCard(project, showFlags = false) {
   return `
     <article class="card">
-      <h3>${project.title}</h3>
+      <h3>${project.title}</h3><div class="title-rule"></div>
       <p>${project.summary}</p>
       <p class="muted"><strong>Creator:</strong> ${project.creatorName}${project.contactEmail ? ` • ${project.contactEmail}` : ""}</p>
       <p class="muted"><strong>Tools:</strong> ${project.toolsUsed}</p>
@@ -195,7 +195,7 @@ function projectCard(project, showFlags = false) {
 function loginPage() {
   return `
     <div class="login-wrap">
-      <section class="panel login-card">
+      <section class="panel login-card deco-border">
         <h1>Prompt & Pour</h1>
         <p class="muted">A private backroom for practical AI experiments, shared by peers.</p>
         <p>Enter the house passphrase and choose your mock role.</p>
@@ -236,12 +236,12 @@ function dashboardPage() {
     </section>
 
     <section class="panel section-featured">
-      <h2>House Favorites</h2>
+      <h2 class="section-title">House Favorites</h2>
       <div class="grid">${favorites.map((p) => projectCard(p)).join("") || "<p>No featured cards yet.</p>"}</div>
     </section>
 
     <section class="panel" style="margin-top:1rem;">
-      <h2>Fresh Pours</h2>
+      <h2 class="section-title">Fresh Pours</h2>
       <p class="muted">Recently added approved pours from the room.</p>
       <div class="grid">${fresh.map((p) => projectCard(p)).join("")}</div>
     </section>
@@ -252,7 +252,7 @@ function galleryPage() { /* unchanged mostly */
   const visible = mockProjects.filter((p) => p.approved && !p.archived && matchesFilters(p));
   return `
     <section class="panel hero">
-      <h1>House Pours</h1>
+      <h1 class="section-title">House Pours</h1>
       <p class="muted">Browse approved builds from around the room.</p>
       ${filterControls()}
       <div class="grid">${visible.map((p) => projectCard(p)).join("") || "<p>No matching pours yet.</p>"}</div>
@@ -263,7 +263,7 @@ function galleryPage() { /* unchanged mostly */
 function sharePage() {
   return `
     <section class="panel hero">
-      <h1>Share a Build</h1>
+      <h1 class="section-title">Share a Build</h1>
       <p class="muted">Rough drafts welcome — usefulness beats polish.</p>
       <form>
         <div class="two-col">
@@ -298,8 +298,8 @@ function projectDetailPage() {
   if (!project) return `<section class="panel"><p>Project not found.</p></section>`;
 
   return `
-    <section class="panel">
-      <h1>${project.title}</h1>
+    <section class="panel deco-border">
+      <h1 class="section-title">${project.title}</h1>
       <p class="muted">By ${project.creatorName} • Updated ${project.updatedDate}</p>
       <div class="split">
         <div>
@@ -331,13 +331,13 @@ function adminPage() {
 
   return `
     <section class="panel hero">
-      <h1>Admin Dashboard</h1>
+      <h1 class="section-title">Admin Dashboard</h1>
       <p class="muted">Mock moderation views (no backend wiring yet).</p>
       ${filterControls()}
-      <h2>Pending</h2><div class="grid">${pending.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div>
-      <h2>Approved</h2><div class="grid">${approved.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div>
-      <h2>Featured</h2><div class="grid">${featured.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div>
-      <h2>Archived</h2><div class="grid">${archived.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div>
+      <h2 class="section-title">Pending</h2><div class="grid">${pending.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div>
+      <h2 class="section-title">Approved</h2><div class="grid">${approved.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div>
+      <h2 class="section-title">Featured</h2><div class="grid">${featured.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div>
+      <h2 class="section-title">Archived</h2><div class="grid">${archived.map((p) => projectCard(p, true)).join("") || "<p>None</p>"}</div>
     </section>
   `;
 }
