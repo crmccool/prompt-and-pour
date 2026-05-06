@@ -1,3 +1,31 @@
+
+function renderFatalError(error) {
+  const message = error instanceof Error ? error.message : String(error || "Unknown runtime error");
+  const detail = error instanceof Error && error.stack ? error.stack : "No stack trace available.";
+  const panel = `
+    <section class="panel login-card deco-border runtime-error" role="alert">
+      <h1>Prompt &amp; Pour hit an error</h1>
+      <p class="muted">${message}</p>
+      <pre>${detail}</pre>
+      <p class="muted">Fallback mode is active. Refresh to retry.</p>
+    </section>
+  `;
+  const mount = document.getElementById("app");
+  if (mount) {
+    mount.innerHTML = panel;
+  } else {
+    document.body.innerHTML = `<div id="app">${panel}</div>`;
+  }
+}
+
+window.onerror = function onWindowError(_message, _source, _lineno, _colno, error) {
+  renderFatalError(error || _message);
+};
+
+window.addEventListener("unhandledrejection", (event) => {
+  renderFatalError(event.reason || "Unhandled promise rejection");
+});
+
 const categories = [
   "Workflow & Admin",
   "Writing & Communication",
@@ -133,5 +161,18 @@ function setCategoryFilter(value) { state.selectedCategory = value; render(); }
 function setStatusFilter(value) { state.selectedStatus = value; render(); }
 function render() { const app = document.getElementById("app"); if (!app) { console.error("#app container not found; cannot render Prompt & Pour."); return; } let content = ""; if (!state.loggedIn) content = loginPage(); else { const pages = { dashboard: dashboardPage, gallery: galleryPage, share: sharePage, admin: adminPage, rules: rulesPage, project: projectDetailPage }; const safeRoute = state.route === "admin" && state.role !== "admin" ? "dashboard" : state.route; content = `<div class="layout">${topNav()}<main class="main">${(pages[safeRoute] || dashboardPage)()}</main></div>`; } app.innerHTML = content; }
 Object.assign(window, { setRoute, login, logout, setCategoryFilter, setStatusFilter, submitPour });
-loadProjects();
-render();
+
+function startApp() {
+  try {
+    render();
+    void loadProjects();
+  } catch (error) {
+    renderFatalError(error);
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", startApp, { once: true });
+} else {
+  startApp();
+}

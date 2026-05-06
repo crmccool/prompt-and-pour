@@ -23,6 +23,18 @@ if (!indexContent.trim()) {
   fail('index.html is empty.');
 }
 
+const requiredPatterns = [
+  { pattern: /id=["']app["']/, label: 'id="app" mount container' },
+  { pattern: /href=["']styles\.css["']/, label: 'styles.css reference' },
+  { pattern: /src=["']app\.js["']/, label: 'app.js reference' },
+];
+
+for (const check of requiredPatterns) {
+  if (!check.pattern.test(indexContent)) {
+    fail(`index.html missing ${check.label}.`);
+  }
+}
+
 const appCheck = spawnSync('node', ['--check', path.join(root, 'app.js')], { stdio: 'inherit' });
 if (appCheck.status !== 0) {
   fail('node --check app.js failed.');
