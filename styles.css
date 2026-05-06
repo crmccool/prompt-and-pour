@@ -394,6 +394,30 @@ form { display: grid; gap: 0.75rem; }
   background: rgba(184, 146, 82, 0.22);
 }
 
+.admin-moderation-panel {
+  margin-bottom: 1rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(184, 146, 82, 0.45);
+  background: linear-gradient(180deg, rgba(20, 35, 56, 0.88), rgba(12, 23, 39, 0.9));
+}
+
+.admin-moderation-panel .section-title {
+  margin-bottom: 0.65rem;
+}
+
+.admin-moderation-panel .muted {
+  margin-top: 0;
+}
+
+.admin-steps {
+  margin: 0.65rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.admin-steps li {
+  margin: 0.2rem 0;
+}
+
 @media (max-width: 640px) {
   .success-notice-row {
     flex-direction: column;
