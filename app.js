@@ -224,10 +224,19 @@ function dashboardPage() {
 
   return `
     <section class="panel hero deco-border">
-      <h1>A quiet room for people figuring out AI before the playbook exists.</h1>
-      <p class="muted">Prompt & Pour is a private, unofficial peer space for sharing practical AI experiments: rough builds, prompts, workflows, lessons learned, and calls for help.</p>
-      <p class="muted">Bring what works, bring what broke, bring what you're still mixing. The point is momentum, not polish.</p>
-      <button class="button" onclick="setRoute('gallery')">Browse House Pours</button>
+      <div class="hero-layout">
+        <div class="hero-copy">
+          <h1>A quiet room for people figuring out AI before the playbook exists.</h1>
+          <p class="muted">Prompt & Pour is a private, unofficial peer space for sharing practical AI experiments: rough builds, prompts, workflows, lessons learned, and calls for help.</p>
+          <p class="muted">Bring what works, bring what broke, bring what you're still mixing. The point is momentum, not polish.</p>
+          <button class="button" onclick="setRoute('gallery')">Browse House Pours</button>
+        </div>
+        <figure class="hero-figure" aria-hidden="true">
+          <div class="hero-figure-frame">
+            <img src="deco-bartender.png" alt="" loading="lazy" />
+          </div>
+        </figure>
+      </div>
     </section>
 
     <section class="panel callout deco-border">
