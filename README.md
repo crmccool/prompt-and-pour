@@ -38,10 +38,20 @@ If Supabase config is missing, the app automatically falls back to mock data/loc
 
 ## Vercel config
 
-Because this is a static app, provide the public config values at build/deploy time by generating `supabase.config.local.js` (or equivalent static file injection) with:
+Because this is a static app, Vercel should generate `supabase.config.local.js` during build:
 
-- `window.PROMPT_POUR_SUPABASE_CONFIG.url`
-- `window.PROMPT_POUR_SUPABASE_CONFIG.anonKey`
+1. In your Vercel project settings, add environment variable `PROMPT_POUR_SUPABASE_URL`.
+2. Add environment variable `PROMPT_POUR_SUPABASE_ANON_KEY`.
+3. Set the Build Command to run:
+
+   ```bash
+   npm run build
+   ```
+
+   This runs `node scripts/write-supabase-config.js`, which writes `supabase.config.local.js` at the project root when both values are present.
+4. No output/build directory is required; this project is plain static HTML/CSS/JS served from the root.
+
+If either environment variable is missing, config generation is skipped and the app keeps using mock fallback behavior.
 
 Do not hardcode real keys in tracked files.
 
