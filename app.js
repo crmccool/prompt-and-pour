@@ -1,4 +1,6 @@
 
+console.log("Prompt & Pour app.js loaded");
+
 function renderFatalError(error) {
   const message = error instanceof Error ? error.message : String(error || "Unknown runtime error");
   const detail = error instanceof Error && error.stack ? error.stack : "No stack trace available.";
@@ -38,6 +40,11 @@ const categories = [
 
 const statuses = ["Idea", "In Progress", "In Use", "Needs Help"];
 
+const mockProjects = [
+  { id: "p1", title: "Meeting Note Distiller", summary: "Turns rough meeting notes into concise action summaries.", creatorName: "Avery Chen", contactEmail: "avery@example.com", categories: ["Workflow & Admin", "Writing & Communication"], status: "In Use", toolsUsed: "ChatGPT, Docs, Zapier", problemSolved: "Busy teams struggled to convert notes into follow-ups.", howAiHelped: "AI generated draft summaries and owner/action checklists.", lessonsLearned: "Template quality matters more than model complexity.", helpWanted: "Looking for better quality checks before sending.", reusableBits: "Prompt skeleton for action-item extraction.", links: ["https://example.com/demo-1"], screenshotPlaceholder: "Screenshot placeholder", reusePermission: "Yes, adapt with credit.", createdDate: "2026-04-02", updatedDate: "2026-04-29", approved: true, featured: true, archived: false },
+  { id: "p2", title: "Syllabus-to-Quiz Mixer", summary: "Generates draft quiz banks from course objectives.", creatorName: "Jordan Patel", contactEmail: "", categories: ["Learning & Training", "Data & Research"], status: "In Progress", toolsUsed: "GPT-4.1, Sheets", problemSolved: "Creating varied practice questions took too long.", howAiHelped: "Suggested question stems across difficulty tiers.", lessonsLearned: "Human review catches ambiguity quickly.", helpWanted: "Need help with rubric alignment.", reusableBits: "Difficulty balancing prompt and review checklist.", links: [], screenshotPlaceholder: "Screenshot placeholder", reusePermission: "Share internally.", createdDate: "2026-03-15", updatedDate: "2026-04-30", approved: true, featured: false, archived: false },
+];
+
 const state = {
   loggedIn: false,
   role: "member",
@@ -45,15 +52,10 @@ const state = {
   selectedCategory: "All",
   selectedStatus: "All",
   selectedProjectId: null,
-  projects: [],
+  projects: [...mockProjects],
   dataSource: "mock",
   notice: "",
 };
-
-const mockProjects = [
-  { id: "p1", title: "Meeting Note Distiller", summary: "Turns rough meeting notes into concise action summaries.", creatorName: "Avery Chen", contactEmail: "avery@example.com", categories: ["Workflow & Admin", "Writing & Communication"], status: "In Use", toolsUsed: "ChatGPT, Docs, Zapier", problemSolved: "Busy teams struggled to convert notes into follow-ups.", howAiHelped: "AI generated draft summaries and owner/action checklists.", lessonsLearned: "Template quality matters more than model complexity.", helpWanted: "Looking for better quality checks before sending.", reusableBits: "Prompt skeleton for action-item extraction.", links: ["https://example.com/demo-1"], screenshotPlaceholder: "Screenshot placeholder", reusePermission: "Yes, adapt with credit.", createdDate: "2026-04-02", updatedDate: "2026-04-29", approved: true, featured: true, archived: false },
-  { id: "p2", title: "Syllabus-to-Quiz Mixer", summary: "Generates draft quiz banks from course objectives.", creatorName: "Jordan Patel", contactEmail: "", categories: ["Learning & Training", "Data & Research"], status: "In Progress", toolsUsed: "GPT-4.1, Sheets", problemSolved: "Creating varied practice questions took too long.", howAiHelped: "Suggested question stems across difficulty tiers.", lessonsLearned: "Human review catches ambiguity quickly.", helpWanted: "Need help with rubric alignment.", reusableBits: "Difficulty balancing prompt and review checklist.", links: [], screenshotPlaceholder: "Screenshot placeholder", reusePermission: "Share internally.", createdDate: "2026-03-15", updatedDate: "2026-04-30", approved: true, featured: false, archived: false },
-];
 
 function getSupabaseClient() {
   const supabaseConfig = window.PROMPT_POUR_SUPABASE_CONFIG;
@@ -77,8 +79,6 @@ function getSupabaseClient() {
     return null;
   }
 }
-
-const supabase = getSupabaseClient();
 
 function mapRowToProject(row) {
   return {
@@ -107,10 +107,9 @@ function mapRowToProject(row) {
 }
 
 async function loadProjects() {
+  const supabase = getSupabaseClient();
+
   if (!supabase) {
-    state.projects = [...mockProjects];
-    state.dataSource = "mock";
-    render();
     return;
   }
 
@@ -150,6 +149,7 @@ function dashboardPage() { const approved = state.projects.filter((p) => p.appro
 function galleryPage() { const visible = state.projects.filter((p) => p.approved && !p.archived && matchesFilters(p)); return `<section class="panel hero"><h1 class="section-title">House Pours</h1><p class="muted">Browse approved builds from around the room.</p>${filterControls()}<div class="grid">${visible.map((p) => projectCard(p)).join("") || "<p>No matching pours yet.</p>"}</div></section>`; }
 function sharePage() { const modeNote = state.dataSource === "supabase" ? "Submissions are reviewed before they are poured publicly." : "Supabase is not configured here, so this submit stays in local mock mode."; return `<section class="panel hero"><h1 class="section-title">Share a Build</h1><p class="muted">Rough drafts welcome — usefulness beats polish.</p><p class="muted">${modeNote}</p>${state.notice ? `<p class='muted'><strong>${state.notice}</strong></p>` : ""}<form onsubmit="event.preventDefault(); submitPour(event);"><div class="two-col"><label>Title<input name="title" required placeholder="What are you building?" /></label><label>Creator Name<input name="creatorName" required placeholder="Your name" /></label></div><label>Summary<textarea name="summary" placeholder="Quick description"></textarea></label><div class="two-col"><label>Category<select name="category">${categories.map((c) => `<option>${c}</option>`).join("")}</select></label><label>Status<select name="status">${statuses.map((s) => `<option>${s}</option>`).join("")}</select></label></div><label>Tools Used<input name="toolsUsed" placeholder="e.g., ChatGPT, Python" /></label><label>Problem Being Solved<textarea name="problemSolved"></textarea></label><label>How AI Helped<textarea name="howAiHelped"></textarea></label><label>Lessons Learned<textarea name="lessonsLearned"></textarea></label><label>Help Wanted<textarea name="helpWanted"></textarea></label><label>Reusable Bits / Prompt / Code Notes<textarea name="reusableBits"></textarea></label><label>Links<input name="links" placeholder="https://..." /></label><button class="button" type="submit">Share a Build</button></form></section>`; }
 async function submitPour(event) { const form = event.target; const formData = new FormData(form); const payload = { title: formData.get("title")?.toString().trim(), creator_name: formData.get("creatorName")?.toString().trim(), summary: formData.get("summary")?.toString().trim(), categories: [formData.get("category")?.toString() || "Other / Not sure"], status: formData.get("status")?.toString() || "Idea", tools_used: formData.get("toolsUsed")?.toString().trim(), problem_solved: formData.get("problemSolved")?.toString().trim(), how_ai_helped: formData.get("howAiHelped")?.toString().trim(), lessons_learned: formData.get("lessonsLearned")?.toString().trim(), help_wanted: formData.get("helpWanted")?.toString().trim(), reusable_bits: formData.get("reusableBits")?.toString().trim(), links: (formData.get("links")?.toString().trim() ? [formData.get("links").toString().trim()] : []), approved: false, featured: false, archived: false };
+const supabase = getSupabaseClient();
 if (supabase) { const { error } = await supabase.from("prompt_pour_pours").insert(payload); if (error) { state.notice = "Could not send your pour right now. Please try again."; } else { state.notice = "Your pour has been sent behind the bar for review."; form.reset(); } render(); return; }
 state.notice = "Mock mode: your pour was captured locally only."; form.reset(); render(); }
 function projectDetailPage() { const project = state.projects.find((p) => String(p.id) === String(state.selectedProjectId)); if (!project) return `<section class="panel"><p>Project not found.</p></section>`; return `<section class="panel deco-border"><h1 class="section-title">${project.title}</h1><p class="muted">By ${project.creatorName} • Updated ${project.updatedDate}</p><div class="split"><div><p><strong>Summary:</strong> ${project.summary}</p><p><strong>Problem being solved:</strong> ${project.problemSolved}</p><p><strong>How AI helped:</strong> ${project.howAiHelped}</p><p><strong>Lessons learned:</strong> ${project.lessonsLearned}</p><p><strong>Help wanted:</strong> ${project.helpWanted}</p><p><strong>Reusable bits:</strong> ${project.reusableBits}</p><p><strong>Tools:</strong> ${project.toolsUsed}</p><p><strong>Reuse permission:</strong> ${project.reusePermission}</p></div><aside><div class="screenshot-placeholder">${project.screenshotPlaceholder}</div><p><strong>Links</strong><br/>${project.links.length ? project.links.map((l) => `<a href="${l}">${l}</a>`).join("<br/>") : "None yet"}</p><div class="badges">${project.categories.map((c) => `<span class='badge'>${c}</span>`).join("")}<span class='badge status'>${project.status}</span></div></aside></div></section>`; }
@@ -164,7 +164,9 @@ Object.assign(window, { setRoute, login, logout, setCategoryFilter, setStatusFil
 
 function startApp() {
   try {
+    console.log("Prompt & Pour startApp running");
     render();
+    console.log("Prompt & Pour first render complete");
     void loadProjects();
   } catch (error) {
     renderFatalError(error);
