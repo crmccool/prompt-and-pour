@@ -78,8 +78,11 @@ h1, h2, h3, .brand {
 .brand-copy {
   display: flex;
   flex-direction: column;
-  line-height: 1.1;
-  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  line-height: 1.05;
+  font-family: "Limelight", "Poiret One", serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: clamp(1.55rem, 2.6vw, 2.4rem);
   color: var(--gold-soft);
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.38);
 }
@@ -87,17 +90,19 @@ h1, h2, h3, .brand {
 .brand-mascot {
   width: auto;
   height: auto;
-  max-height: 96px;
-  opacity: 0.95;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
+  max-height: 138px;
+  opacity: 0.97;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
 }
 
 .brand small,
 .brand-copy small {
   font-family: "Poiret One", sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.3em;
-  margin-top: 0.4rem;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.34em;
+  margin-top: 0.38rem;
+  color: rgba(210, 185, 130, 0.92);
 }
 
 .nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -266,9 +271,9 @@ form { display: grid; gap: 0.75rem; }
   .topbar-nav-row {
     margin-top: 0.5rem;
   }
-  .brand-copy { font-size: clamp(1.12rem, 5vw, 1.45rem); }
-  .brand-mascot { max-height: 62px; }
-  .brand-copy small { letter-spacing: 0.22em; }
+  .brand-copy { font-size: clamp(1.16rem, 5.2vw, 1.6rem); }
+  .brand-mascot { max-height: 84px; }
+  .brand-copy small { letter-spacing: 0.24em; }
 }
 
 .hero-layout {
