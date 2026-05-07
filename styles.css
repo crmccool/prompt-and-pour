@@ -78,7 +78,7 @@ h1, h2, h3, .brand {
 .brand-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.36rem;
+  gap: 0.52rem;
   color: var(--gold-soft);
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.38);
 }
@@ -108,14 +108,15 @@ h1, h2, h3, .brand {
 }
 
 .brand-secondary {
-  font-size: clamp(0.82rem, 1.35vw, 1.14rem);
+  font-size: clamp(1.02rem, 1.8vw, 1.46rem);
+  letter-spacing: 0.2em;
 }
 
 .brand-subhead {
-  margin: 0;
+  margin: 0.22rem 0 0;
   max-width: 58ch;
-  font-size: clamp(0.62rem, 0.95vw, 0.78rem);
-  letter-spacing: 0.16em;
+  font-size: clamp(0.74rem, 1.15vw, 0.96rem);
+  letter-spacing: 0.14em;
 }
 
 .brand-mascot {
@@ -294,8 +295,8 @@ form { display: grid; gap: 0.75rem; }
   }
   .brand-line { gap: 0.42rem; }
   .brand-primary { font-size: clamp(1.2rem, 5.6vw, 1.7rem); }
-  .brand-secondary { font-size: clamp(0.62rem, 2.4vw, 0.82rem); letter-spacing: 0.16em; }
-  .brand-subhead { font-size: clamp(0.56rem, 2.1vw, 0.72rem); letter-spacing: 0.1em; }
+  .brand-secondary { font-size: clamp(0.8rem, 3.1vw, 1.02rem); letter-spacing: 0.14em; }
+  .brand-subhead { font-size: clamp(0.66rem, 2.45vw, 0.84rem); letter-spacing: 0.1em; margin-top: 0.2rem; }
   .brand-mascot { max-height: 104px; }
 }
 
