@@ -82,7 +82,8 @@ h1, h2, h3, .brand {
 
 .nav button.active,
 .nav button:hover,
-.button:hover {
+.button:hover,
+.button.active {
   background: linear-gradient(180deg, rgba(184, 146, 82, 0.28), rgba(22, 35, 53, 0.95));
 }
 
@@ -197,6 +198,7 @@ textarea:focus-visible {
 .filters, .two-col { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .filters { margin-bottom: 1rem; }
 .admin-actions, .admin-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.admin-tabs { margin: 0.75rem 0 1rem; }
 
 input, select, textarea {
   width: 100%;
