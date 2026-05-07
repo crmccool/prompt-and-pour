@@ -240,6 +240,7 @@ async function login() {
     state.adminToken = "";
     state.memberToken = body.memberToken;
     sessionStorage.setItem("promptPourMemberToken", state.memberToken);
+    console.log("[Prompt & Pour] Member login token received/stored:", Boolean(state.memberToken));
     sessionStorage.removeItem("promptPourAdminToken");
     state.adminPending = [];
     state.adminApproved = [];
@@ -261,10 +262,37 @@ async function login() {
   }
 }
 function logout() { state.loggedIn = false; state.role = "member"; state.loginError = ""; state.memberToken = ""; state.adminToken = ""; sessionStorage.removeItem("promptPourMemberToken"); sessionStorage.removeItem("promptPourAdminToken"); setRoute("login"); }
+function restoreSessionState() {
+  const storedAdminToken = sessionStorage.getItem("promptPourAdminToken") || "";
+  const storedMemberToken = sessionStorage.getItem("promptPourMemberToken") || "";
+  state.adminToken = storedAdminToken;
+  state.memberToken = storedMemberToken;
+  console.log("[Prompt & Pour] Session restore member token restored:", Boolean(storedMemberToken));
+
+  if (storedAdminToken) {
+    state.role = "admin";
+    state.loggedIn = true;
+    state.route = "admin";
+    return;
+  }
+
+  if (storedMemberToken) {
+    state.role = "member";
+    state.loggedIn = true;
+    state.route = "dashboard";
+    return;
+  }
+
+  if (state.loggedIn && state.role === "member" && !state.memberToken) {
+    console.warn("[Prompt & Pour] Member marked as logged in without member token; resetting to login state.");
+    state.loggedIn = false;
+    state.route = "login";
+  }
+}
 function setCategoryFilter(v) { state.selectedCategory = v; render(); }
 function setStatusFilter(v) { state.selectedStatus = v; render(); }
 function render() { const app = document.getElementById("app"); if (!app) return; if (!state.loggedIn) app.innerHTML = loginPage(); else { const pages = { dashboard: dashboardPage, gallery: galleryPage, share: sharePage, admin: adminPage, rules: rulesPage, project: projectDetailPage }; app.innerHTML = `<div class="layout">${topNav()}<main class="main">${(pages[state.route] || dashboardPage)()}</main>${dataStatusPill()}</div>`; } }
 Object.assign(window, { setRoute, login, logout, setCategoryFilter, setStatusFilter, submitPour, adminLogin, clearAdminSession, refreshAdminLists, moderatePour, setAdminView, startAdminEdit, updateAdminEditField, cancelAdminEdit, saveAdminEdit });
 
-function startApp() { render(); void loadProjects(); if (state.adminToken) void refreshAdminLists(); }
+function startApp() { restoreSessionState(); render(); void loadProjects(); if (state.adminToken) void refreshAdminLists(); }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startApp, { once: true }); else startApp();
