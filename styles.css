@@ -78,31 +78,52 @@ h1, h2, h3, .brand {
 .brand-copy {
   display: flex;
   flex-direction: column;
-  line-height: 1.05;
+  gap: 0.36rem;
+  color: var(--gold-soft);
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.38);
+}
+
+.brand-line {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  line-height: 1.06;
+}
+
+.brand-primary {
   font-family: "Limelight", "Poiret One", serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-size: clamp(1.55rem, 2.6vw, 2.4rem);
-  color: var(--gold-soft);
-  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.38);
+  font-size: clamp(1.8rem, 3.3vw, 3rem);
+}
+
+.brand-secondary,
+.brand-subhead {
+  font-family: "Poiret One", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: rgba(210, 185, 130, 0.92);
+}
+
+.brand-secondary {
+  font-size: clamp(0.82rem, 1.35vw, 1.14rem);
+}
+
+.brand-subhead {
+  margin: 0;
+  max-width: 58ch;
+  font-size: clamp(0.62rem, 0.95vw, 0.78rem);
+  letter-spacing: 0.16em;
 }
 
 .brand-mascot {
   width: auto;
   height: auto;
-  max-height: 138px;
+  max-height: 178px;
   opacity: 0.97;
   filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
-}
-
-.brand small,
-.brand-copy small {
-  font-family: "Poiret One", sans-serif;
-  text-transform: uppercase;
-  font-size: 0.68rem;
-  letter-spacing: 0.34em;
-  margin-top: 0.38rem;
-  color: rgba(210, 185, 130, 0.92);
 }
 
 .nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -271,9 +292,11 @@ form { display: grid; gap: 0.75rem; }
   .topbar-nav-row {
     margin-top: 0.5rem;
   }
-  .brand-copy { font-size: clamp(1.16rem, 5.2vw, 1.6rem); }
-  .brand-mascot { max-height: 84px; }
-  .brand-copy small { letter-spacing: 0.24em; }
+  .brand-line { gap: 0.42rem; }
+  .brand-primary { font-size: clamp(1.2rem, 5.6vw, 1.7rem); }
+  .brand-secondary { font-size: clamp(0.62rem, 2.4vw, 0.82rem); letter-spacing: 0.16em; }
+  .brand-subhead { font-size: clamp(0.56rem, 2.1vw, 0.72rem); letter-spacing: 0.1em; }
+  .brand-mascot { max-height: 104px; }
 }
 
 .hero-layout {
