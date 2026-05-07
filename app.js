@@ -24,7 +24,18 @@ const mockProjects = [
 
 const state = { loggedIn: false, role: "member", route: "login", selectedCategory: "All", selectedStatus: "All", selectedProjectId: null, projects: [...mockProjects], dataSource: "mock", dataStatusReason: "Supabase not checked yet.", notice: "", dashboardNotice: "", loginError: "", adminToken: sessionStorage.getItem("promptPourAdminToken") || "", memberToken: sessionStorage.getItem("promptPourMemberToken") || "", adminPending: [], adminApproved: [], adminArchived: [], adminNotice: "", adminError: "", adminLoading: false, adminView: "pending", adminEditingId: "", adminEditDraft: {}, adminEditError: "", adminEditSuccess: "" };
 
-function getSupabaseClient() {
+async function waitForSupabaseLibrary(maxWaitMs = 4000) {
+  if (window.supabase?.createClient) return true;
+  const start = Date.now();
+  while (Date.now() - start < maxWaitMs) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    if (window.supabase?.createClient) return true;
+  }
+  return false;
+}
+
+
+async function getSupabaseClient() {
   const c = window.PROMPT_POUR_SUPABASE_CONFIG;
   if (!c?.url || !c?.anonKey) {
     state.dataStatusReason = "Supabase config missing.";
@@ -32,9 +43,12 @@ function getSupabaseClient() {
     return null;
   }
   if (!window.supabase?.createClient) {
-    state.dataStatusReason = "Supabase client library missing.";
-    console.warn("[Prompt & Pour] Falling back to mock data: Supabase client library is unavailable.");
-    return null;
+    const available = await waitForSupabaseLibrary();
+    if (!available) {
+      state.dataStatusReason = "Supabase client library missing.";
+      console.warn("[Prompt & Pour] Falling back to mock data: Supabase client library is unavailable.");
+      return null;
+    }
   }
   try { return window.supabase.createClient(c.url, c.anonKey); } catch (error) { state.dataStatusReason = "Supabase client failed to initialize."; console.error("[Prompt & Pour] Failed to initialize Supabase client.", error); return null; }
 }
@@ -44,7 +58,7 @@ function getMemberFunctionUrl() { const c = window.PROMPT_POUR_SUPABASE_CONFIG; 
 
 function mapRowToProject(row) { return { id: row.id, title: row.title || "Untitled Pour", summary: row.summary || "", creatorName: row.creator_name || "Anonymous", contactEmail: row.creator_email || row.contact_email || "", categories: Array.isArray(row.categories) && row.categories.length ? row.categories : ["Other / Not sure"], status: row.status || "Idea", toolsUsed: Array.isArray(row.tools_used) ? row.tools_used.join(", ") : row.tools_used || "", problemSolved: row.problem_statement || "", howAiHelped: row.ai_use || "", lessonsLearned: row.lessons_learned || "", helpWanted: row.help_wanted || "", reusableBits: row.reusable_bits || "", links: Array.isArray(row.links) ? row.links : [], screenshotPath: row.screenshot_url || "", screenshotSignedUrl: row.screenshot_signed_url || "", screenshotUrl: row.screenshot_signed_url || row.screenshot_url || "", screenshotPlaceholder: "Screenshot placeholder", reusePermission: row.reuse_permission || "", createdDate: (row.created_at || "").slice(0, 10), updatedDate: (row.updated_at || row.created_at || "").slice(0, 10), approved: !!row.approved, featured: !!row.featured, archived: !!row.archived }; }
 
-async function loadProjects() { const s = getSupabaseClient(); if (!s) return render(); try { const { data, error } = await s.from("prompt_pour_pours").select("*").eq("approved", true).eq("archived", false).order("created_at", { ascending: false }); if (error) { state.dataStatusReason = `Supabase query failed: ${error.message}`; console.error("[Prompt & Pour] Failed to load approved pours from Supabase.", error); render(); return; } state.projects = data.map(mapRowToProject); const screenshotCount = state.projects.filter((project) => String(project.screenshotPath || "").trim()).length; console.log("[Prompt & Pour] Member pours with screenshot_url:", screenshotCount); await signMemberScreenshotUrls(state.projects); state.dataSource = "supabase"; state.dataStatusReason = "Supabase connected."; } catch (error) { state.dataStatusReason = "Supabase request failed."; console.error("[Prompt & Pour] Unexpected error while loading projects.", error); } render(); }
+async function loadProjects() { const s = await getSupabaseClient(); if (!s) return render(); try { const { data, error } = await s.from("prompt_pour_pours").select("*").eq("approved", true).eq("archived", false).order("created_at", { ascending: false }); if (error) { state.dataStatusReason = `Supabase query failed: ${error.message}`; console.error("[Prompt & Pour] Failed to load approved pours from Supabase.", error); render(); return; } state.projects = data.map(mapRowToProject); const screenshotCount = state.projects.filter((project) => String(project.screenshotPath || "").trim()).length; console.log("[Prompt & Pour] Member pours with screenshot_url:", screenshotCount); await signMemberScreenshotUrls(state.projects); state.dataSource = "supabase"; state.dataStatusReason = "Supabase connected."; } catch (error) { state.dataStatusReason = "Supabase request failed."; console.error("[Prompt & Pour] Unexpected error while loading projects.", error); } render(); }
 
 function setRoute(route, projectId = null) { state.route = route === "admin" && state.role !== "admin" && !state.adminToken ? "dashboard" : route; state.selectedProjectId = projectId; render(); }
 const navButton = (label, route) => `<button class="${state.route === route ? "active" : ""}" onclick="setRoute('${route}')">${label}</button>`;
@@ -109,7 +123,7 @@ async function submitPour(e) { const f = new FormData(e.target); const screensho
     if (!uploadResponse.ok || !uploadBody?.path) { alert(uploadBody?.error || "Screenshot upload failed."); return; }
     payload.screenshot_url = uploadBody.path;
   }
-  const s = getSupabaseClient(); if (s) { const { error } = await s.from("prompt_pour_pours").insert(payload); if (!error) { e.target.reset(); state.dashboardNotice = "Your build was submitted for review. It will appear in House Pours once approved."; setRoute("dashboard"); return; } }
+  const s = await getSupabaseClient(); if (s) { const { error } = await s.from("prompt_pour_pours").insert(payload); if (!error) { e.target.reset(); state.dashboardNotice = "Your build was submitted for review. It will appear in House Pours once approved."; setRoute("dashboard"); return; } }
 }
 function sharePage() { return `<section class="panel hero"><h1 class="section-title">Share a Build</h1><form onsubmit="event.preventDefault(); submitPour(event);"><div class="two-col"><label>Title<input name="title" required /></label><label>Creator Name<input name="creatorName" required /></label></div><label>Summary<textarea name="summary"></textarea></label><div class="two-col"><label>Category<select name="category">${categories.map((c) => `<option>${c}</option>`).join("")}</select></label><label>Stage<select name="status">${stages.map((s) => `<option>${s}</option>`).join("")}</select></label></div><label>Tools Used<input name="toolsUsed" /></label><label>Problem Being Solved<textarea name="problemSolved"></textarea></label><label>Lessons Learned<textarea name="lessonsLearned"></textarea></label><label>Links<input name="links" /></label><label>Screenshot (optional)<input name="screenshot" type="file" accept="image/png,image/jpeg,image/webp" /></label><p class="muted">Optional screenshot. Please avoid uploading confidential, patient, student, proprietary, or otherwise sensitive information.</p><button class="button" type="submit">Submit</button></form></section>`; }
 function projectDetailPage() { const p = state.projects.find((x) => String(x.id) === String(state.selectedProjectId)); return p ? `<section class="panel"><h1 class="section-title">${p.title}</h1>${memberDetailPanel(p)}</section>` : `<section class="panel"><p>Project not found.</p></section>`; }
