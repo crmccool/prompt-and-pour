@@ -42,9 +42,16 @@ h1, h2, h3, .brand {
 .layout { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
 
 .topbar {
-  background: linear-gradient(180deg, rgba(6, 10, 17, 0.97), rgba(10, 16, 27, 0.95));
+  background:
+    linear-gradient(92deg, rgba(5, 9, 15, 0.9) 0%, rgba(5, 9, 15, 0.78) 43%, rgba(5, 9, 15, 0.54) 62%, rgba(5, 9, 15, 0.44) 100%),
+    linear-gradient(180deg, rgba(6, 10, 17, 0.96), rgba(10, 16, 27, 0.94)),
+    url("deco-bartender.png");
+  background-position: left top, left top, right center;
+  background-size: 100% 100%, 100% 100%, cover;
+  background-repeat: no-repeat;
   border-bottom: 1px solid rgba(184, 146, 82, 0.45);
-  padding: 0.65rem 1rem 0.85rem;
+  padding: 0.65rem 1rem 0.9rem;
+  min-height: 188px;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -56,8 +63,8 @@ h1, h2, h3, .brand {
   display: flex;
   gap: 1rem;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0.2rem 0.65rem;
+  justify-content: flex-start;
+  padding: 0.8rem 0.2rem 0.9rem;
   border-bottom: 1px solid rgba(184, 146, 82, 0.35);
 }
 
@@ -81,6 +88,9 @@ h1, h2, h3, .brand {
   gap: 0.52rem;
   color: var(--gold-soft);
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.38);
+  max-width: min(62ch, 72%);
+  position: relative;
+  z-index: 1;
 }
 
 .brand-line {
@@ -117,14 +127,6 @@ h1, h2, h3, .brand {
   max-width: 58ch;
   font-size: clamp(0.74rem, 1.15vw, 0.96rem);
   letter-spacing: 0.14em;
-}
-
-.brand-mascot {
-  width: auto;
-  height: auto;
-  max-height: 178px;
-  opacity: 0.97;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
 }
 
 .nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -347,10 +349,13 @@ form { display: grid; gap: 0.75rem; }
   .hero::before { inset-inline: 8%; }
   .topbar {
     padding-inline: 0.7rem;
+    min-height: 170px;
+    background-position: left top, left top, 76% center;
+    background-size: 100% 100%, 100% 100%, cover;
   }
   .topbar-brand-row {
     gap: 0.6rem;
-    padding-block: 0.35rem 0.5rem;
+    padding-block: 0.45rem 0.65rem;
   }
   .topbar-nav-row {
     margin-top: 0.5rem;
@@ -359,7 +364,7 @@ form { display: grid; gap: 0.75rem; }
   .brand-primary { font-size: clamp(1.2rem, 5.6vw, 1.7rem); }
   .brand-secondary { font-size: clamp(0.8rem, 3.1vw, 1.02rem); letter-spacing: 0.14em; }
   .brand-subhead { font-size: clamp(0.66rem, 2.45vw, 0.84rem); letter-spacing: 0.1em; margin-top: 0.2rem; }
-  .brand-mascot { max-height: 104px; }
+  .brand-copy { max-width: min(65ch, 92%); }
 }
 
 .hero-layout {
