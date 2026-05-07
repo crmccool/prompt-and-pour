@@ -60,7 +60,28 @@ h1, h2, h3, .brand {
   justify-content: space-between;
 }
 
-.brand { font-size: 1.15rem; color: var(--gold-soft); }
+.brand {
+  font-size: 1.15rem;
+  color: var(--gold-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand-mascot {
+  width: auto;
+  height: auto;
+  max-height: 44px;
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
 .brand small { font-family: "Poiret One", sans-serif; font-size: 0.72rem; letter-spacing: 0.22em; }
 
 .nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -219,6 +240,8 @@ form { display: grid; gap: 0.75rem; }
 @media (max-width: 760px) {
   .split { grid-template-columns: 1fr; }
   .hero::before { inset-inline: 8%; }
+  .brand-mascot { max-height: 34px; }
+  .brand { gap: 0.45rem; }
 }
 
 .hero-layout {
