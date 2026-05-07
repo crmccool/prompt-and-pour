@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type AdminAction = "list_pending" | "list_approved" | "approve" | "archive" | "feature" | "unfeature";
+type AdminAction = "list_pending" | "list_approved" | "list_archived" | "approve" | "archive" | "restore" | "feature" | "unfeature";
 
 type AdminTokenPayload = {
   role: string;
@@ -139,6 +139,17 @@ Deno.serve(async (req) => {
     return jsonResponse(200, { rows: data });
   }
 
+  if (action === "list_archived") {
+    const { data, error } = await supabase
+      .from("prompt_pour_pours")
+      .select("*")
+      .eq("archived", true)
+      .order("created_at", { ascending: false });
+
+    if (error) return jsonResponse(500, { error: error.message });
+    return jsonResponse(200, { rows: data });
+  }
+
   const id = payload.id;
   if (!id) {
     return jsonResponse(400, { error: "Missing id for action." });
@@ -149,11 +160,13 @@ Deno.serve(async (req) => {
       ? { approved: true }
       : action === "archive"
         ? { archived: true }
-        : action === "feature"
-          ? { featured: true }
-          : action === "unfeature"
-            ? { featured: false }
-            : {};
+        : action === "restore"
+          ? { archived: false }
+          : action === "feature"
+            ? { featured: true }
+            : action === "unfeature"
+              ? { featured: false }
+              : {};
 
   if (Object.keys(updatePayload).length === 0) {
     return jsonResponse(400, { error: `Unsupported action: ${action}` });

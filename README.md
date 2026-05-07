@@ -103,6 +103,10 @@ supabase secrets set \
 
 The frontend now exchanges a valid admin passphrase for a short-lived signed admin token via `/functions/v1/prompt-pour-auth`. Only that token is stored in `sessionStorage` for the active browser session and is sent to `/functions/v1/prompt-pour-admin`. Raw passphrases are not persisted client-side, and service-role credentials remain server-only.
 
+`prompt-pour-admin` supports pending/approved moderation plus archived workflow actions (`list_archived`, `restore`) so archive remains a soft-delete.
+
+> If you change `supabase/functions/prompt-pour-admin/index.ts`, redeploy `prompt-pour-admin` after merge for dashboard changes to work in production.
+
 ## Current non-goals
 
 - Real user authentication/authorization system (still role toggle for prototype access).
