@@ -47,7 +47,24 @@ function memberField(label, value) { return value ? `<section class="member-deta
 function memberListField(label, values) { return Array.isArray(values) && values.length ? memberField(label, values.join(", ")) : ""; }
 function memberLinksField(links) { return Array.isArray(links) && links.length ? `<section class="member-detail-field"><h4>Links</h4><ul class="member-links">${links.map((link) => `<li><a href="${escapeHtml(link)}" target="_blank" rel="noreferrer noopener">${escapeHtml(link)}</a></li>`).join("")}</ul></section>` : ""; }
 function memberScreenshotField(url) { return url ? `<section class="member-detail-field"><h4>Screenshot</h4><p><a href="${escapeHtml(url)}" target="_blank" rel="noreferrer noopener">Open screenshot</a></p></section>` : ""; }
-function memberDetailPanel(p) { return `<div class="member-detail-panel">${memberField("Summary", p.summary)}${memberField("Creator", p.creatorName)}${memberListField("Categories", p.categories)}${memberField("Tools Used", p.toolsUsed)}${memberField("Problem Statement", p.problemSolved)}${memberField("AI Use", p.howAiHelped)}${memberField("Lessons Learned", p.lessonsLearned)}${memberField("Help Wanted", p.helpWanted)}${memberField("Reusable Bits", p.reusableBits)}${memberLinksField(p.links)}${memberScreenshotField(p.screenshotUrl)}${memberField("Reuse Permission", p.reusePermission)}${memberField("Created", p.createdDate)}${memberField("Updated", p.updatedDate)}</div>`; }
+function memberDetailPanel(p) {
+  const detailFields = [
+    memberField("Tools Used", p.toolsUsed),
+    memberField("Problem Statement", p.problemSolved),
+    memberField("How AI Helped", p.howAiHelped),
+    memberField("Lessons Learned", p.lessonsLearned),
+    memberField("Help Wanted", p.helpWanted),
+    memberField("Reusable Bits", p.reusableBits),
+    memberLinksField(p.links),
+    memberScreenshotField(p.screenshotUrl),
+    memberField("Reuse Permission", p.reusePermission),
+    memberField("Created", p.createdDate),
+    memberField("Updated", p.updatedDate),
+  ].filter(Boolean);
+  return detailFields.length
+    ? `<div class="member-detail-panel"><p class="member-detail-intro">Inside the pour</p>${detailFields.join("")}</div>`
+    : `<div class="member-detail-panel"><p class="member-detail-empty">No additional project details were shared for this pour yet.</p></div>`;
+}
 function projectCard(p) { return `<article class="card"><h3>${p.title}</h3><div class="title-rule"></div><p>${p.summary}</p><p class="muted"><strong>Creator:</strong> ${p.creatorName}</p><div class="badges">${p.categories.map((c) => `<span class="badge">${c}</span>`).join("")}${p.featured ? '<span class="badge">House Favorite</span>' : ""}</div><details class="member-pour-details"><summary>View details</summary>${memberDetailPanel(p)}<button class="button" type="button" onclick="this.closest('details').open=false">Close details</button></details></article>`; }
 function loginPage() { return `<div class="login-wrap"><section class="panel login-card deco-border"><h1>Prompt &amp; Pour</h1><p class="muted">Speak the passphrase to open the door.</p><form onsubmit="event.preventDefault(); login();"><label>Passphrase<input id="access-passphrase-input" type="password" required /></label><button class="button" type="submit">Enter</button>${state.loginError ? `<p class="muted"><strong>${state.loginError}</strong></p>` : ""}</form></section></div>`; }
 function dashboardPage() { const approved = state.projects.filter((p) => p.approved && !p.archived); const fresh = approved.slice(0, 3); const favorites = approved.filter((p) => p.featured); return `<section class="panel section-featured"><h2 class="section-title">House Favorites</h2><div class="grid">${favorites.map(projectCard).join("") || "<p>No featured cards yet.</p>"}</div></section><section class="panel" style="margin-top:1rem;"><h2 class="section-title">Fresh Pours</h2><div class="grid">${fresh.map(projectCard).join("") || "<p>No approved pours yet.</p>"}</div></section>`; }
