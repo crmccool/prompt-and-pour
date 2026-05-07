@@ -71,10 +71,35 @@ This project shares a Supabase instance with Publications Lookup.
 - Do **not** change unrelated tables, functions, policies, storage buckets, auth config, or schemas.
 - Prompt & Pour objects are scoped to `prompt_pour_*` naming.
 
-## Current non-goals (still mock)
+## Admin moderation via Edge Function
 
-- Real authentication (still mock passphrase + mock role selector).
-- Real admin moderation actions (no client-side approve/update/delete yet).
+Admin actions now run through `supabase/functions/prompt-pour-admin/index.ts` using server-side secrets.
+
+### Configure Supabase Edge Function secrets
+
+Set these secrets in Supabase (Project Settings → Edge Functions → Secrets):
+
+- `PROMPT_POUR_ADMIN_SECRET` (your admin passphrase)
+- `SUPABASE_URL` (usually pre-provided)
+- `SUPABASE_SERVICE_ROLE_KEY` (usually pre-provided)
+
+### Deploy function
+
+```bash
+supabase functions deploy prompt-pour-admin
+```
+
+If you need to set secret values from CLI:
+
+```bash
+supabase secrets set PROMPT_POUR_ADMIN_SECRET=your-admin-passphrase
+```
+
+The frontend calls `/functions/v1/prompt-pour-admin` with the passphrase and never stores service-role credentials.
+
+## Current non-goals
+
+- Real user authentication/authorization system (still role toggle for prototype access).
 - Real file uploads.
 
 ## Static smoke check
