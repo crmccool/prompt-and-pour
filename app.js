@@ -19,7 +19,7 @@ const mockProjects = [
   { id: "p1", title: "Meeting Note Distiller", summary: "Turns rough meeting notes into concise action summaries.", creatorName: "Avery Chen", contactEmail: "avery@example.com", categories: ["Workflow & Admin", "Writing & Communication"], status: "In Use", toolsUsed: "ChatGPT, Docs, Zapier", problemSolved: "Busy teams struggled to convert notes into follow-ups.", howAiHelped: "AI generated draft summaries and owner/action checklists.", lessonsLearned: "Template quality matters more than model complexity.", helpWanted: "Looking for better quality checks before sending.", reusableBits: "Prompt skeleton for action-item extraction.", links: ["https://example.com/demo-1"], screenshotPlaceholder: "Screenshot placeholder", reusePermission: "Yes, adapt with credit.", createdDate: "2026-04-02", updatedDate: "2026-04-29", approved: true, featured: true, archived: false },
 ];
 
-const state = { loggedIn: false, role: "member", route: "login", selectedCategory: "All", selectedStatus: "All", selectedProjectId: null, projects: [...mockProjects], dataSource: "mock", dataStatusReason: "Supabase not checked yet.", notice: "", dashboardNotice: "", loginError: "", adminToken: sessionStorage.getItem("promptPourAdminToken") || "", adminPending: [], adminApproved: [], adminArchived: [], adminNotice: "", adminError: "", adminLoading: false };
+const state = { loggedIn: false, role: "member", route: "login", selectedCategory: "All", selectedStatus: "All", selectedProjectId: null, projects: [...mockProjects], dataSource: "mock", dataStatusReason: "Supabase not checked yet.", notice: "", dashboardNotice: "", loginError: "", adminToken: sessionStorage.getItem("promptPourAdminToken") || "", adminPending: [], adminApproved: [], adminArchived: [], adminNotice: "", adminError: "", adminLoading: false, adminView: "pending" };
 
 function getSupabaseClient() {
   const c = window.PROMPT_POUR_SUPABASE_CONFIG;
@@ -68,7 +68,31 @@ function adminCard(p, buttons, showExpandedDetails = false) {
   ].join("");
   return `<article class="card"><h3>${p.title}</h3>${adminField("Creator", p.creatorName)}${adminField("Contact Email", p.contactEmail)}${adminListField("Categories", p.categories)}${adminField("Status", p.status)}${adminField("Summary", p.summary)}${adminField("Created Date", p.createdDate)}${showExpandedDetails && fullDetails ? `<details><summary>View full submission</summary>${fullDetails}</details>` : fullDetails}<div class="admin-actions">${buttons}</div></article>`;
 }
-function adminPage() { if (!state.adminToken) return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><label>Admin Passphrase<input id="admin-secret-input" type="password" /></label><button class="button" onclick="adminLogin()">Unlock Moderation</button>${state.adminError ? `<p class="muted"><strong>${state.adminError}</strong></p>` : ""}</section>`; return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><div class="admin-toolbar"><button class="button" onclick="refreshAdminLists()">Refresh</button><button class="button" onclick="clearAdminSession()">Lock</button></div>${state.adminLoading ? "<p class='muted'>Loading moderation lists...</p>" : ""}<h2 class="section-title">Pending</h2><div class="grid">${state.adminPending.map((p) => adminCard(p, `<button class='button' onclick="moderatePour('approve','${p.id}')">Approve</button><button class='button' onclick="moderatePour('archive','${p.id}')">Archive</button>`, true)).join("") || "<p>No pending pours.</p>"}</div><h2 class="section-title">Approved</h2><div class="grid">${state.adminApproved.map((p) => adminCard(p, `${p.featured ? `<button class='button' onclick="moderatePour('unfeature','${p.id}')">Unfeature</button>` : `<button class='button' onclick="moderatePour('feature','${p.id}')">Feature</button>`}<button class='button' onclick="moderatePour('archive','${p.id}')">Archive</button>`, true)).join("") || "<p>No approved pours found.</p>"}</div><h2 class="section-title">Archived Pours</h2><div class="grid">${state.adminArchived.map((p) => adminCard(p, `<button class='button' onclick="moderatePour('restore','${p.id}')">Restore</button>`, true)).join("") || "<p>No archived pours found.</p>"}</div></section>`; }
+
+function setAdminView(view) {
+  const allowed = ["pending", "approved", "archived"];
+  if (!allowed.includes(view)) return;
+  state.adminView = view;
+  render();
+}
+function adminViewTab(view, label, count) {
+  const isActive = state.adminView === view;
+  return `<button class="button ${isActive ? "active" : ""}" onclick="setAdminView('${view}')">${label} (${count})</button>`;
+}
+function adminSectionForView() {
+  if (state.adminView === "approved") {
+    return `<h2 class="section-title">Approved Pours</h2><div class="grid">${state.adminApproved.map((p) => adminCard(p, `${p.featured ? `<button class='button' onclick="moderatePour('unfeature','${p.id}')">Unfeature</button>` : `<button class='button' onclick="moderatePour('feature','${p.id}')">Feature</button>`}<button class='button' onclick="moderatePour('archive','${p.id}')">Archive</button>`, true)).join("") || "<p>No approved pours found.</p>"}</div>`;
+  }
+  if (state.adminView === "archived") {
+    return `<h2 class="section-title">Archived Pours</h2><div class="grid">${state.adminArchived.map((p) => adminCard(p, `<button class='button' onclick="moderatePour('restore','${p.id}')">Restore</button>`, true)).join("") || "<p>No archived pours found.</p>"}</div>`;
+  }
+  return `<h2 class="section-title">Pending Pours</h2><div class="grid">${state.adminPending.map((p) => adminCard(p, `<button class='button' onclick="moderatePour('approve','${p.id}')">Approve</button><button class='button' onclick="moderatePour('archive','${p.id}')">Archive</button>`, true)).join("") || "<p>No pending pours.</p>"}</div>`;
+}
+function adminPage() {
+  if (!state.adminToken) return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><label>Admin Passphrase<input id="admin-secret-input" type="password" /></label><button class="button" onclick="adminLogin()">Unlock Moderation</button>${state.adminError ? `<p class="muted"><strong>${state.adminError}</strong></p>` : ""}</section>`;
+  return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><div class="admin-toolbar"><button class="button" onclick="refreshAdminLists()">Refresh</button><button class="button" onclick="clearAdminSession()">Lock</button></div><div class="admin-toolbar admin-tabs">${adminViewTab("pending", "Pending Pours", state.adminPending.length)}${adminViewTab("approved", "Approved Pours", state.adminApproved.length)}${adminViewTab("archived", "Archived Pours", state.adminArchived.length)}</div>${state.adminLoading ? "<p class='muted'>Loading moderation lists...</p>" : ""}${adminSectionForView()}</section>`;
+}
+
 function rulesPage() { return `<section class="panel"><h1>House Rules</h1><p class="rule-quote">No empty glasses.</p></section>`; }
 async function login() {
   const passphrase = document.getElementById("access-passphrase-input")?.value?.trim();
@@ -131,7 +155,7 @@ function logout() { state.loggedIn = false; state.role = "member"; state.loginEr
 function setCategoryFilter(v) { state.selectedCategory = v; render(); }
 function setStatusFilter(v) { state.selectedStatus = v; render(); }
 function render() { const app = document.getElementById("app"); if (!app) return; if (!state.loggedIn) app.innerHTML = loginPage(); else { const pages = { dashboard: dashboardPage, gallery: galleryPage, share: sharePage, admin: adminPage, rules: rulesPage, project: projectDetailPage }; app.innerHTML = `<div class="layout">${topNav()}<main class="main">${(pages[state.route] || dashboardPage)()}</main>${dataStatusPill()}</div>`; } }
-Object.assign(window, { setRoute, login, logout, setCategoryFilter, setStatusFilter, submitPour, adminLogin, clearAdminSession, refreshAdminLists, moderatePour });
+Object.assign(window, { setRoute, login, logout, setCategoryFilter, setStatusFilter, submitPour, adminLogin, clearAdminSession, refreshAdminLists, moderatePour, setAdminView });
 
 function startApp() { render(); void loadProjects(); if (state.adminToken) void refreshAdminLists(); }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startApp, { once: true }); else startApp();
