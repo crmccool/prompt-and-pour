@@ -277,8 +277,30 @@ textarea { min-height: 95px; resize: vertical; }
 form { display: grid; gap: 0.75rem; }
 .rule-quote { border-left: 2px solid var(--gold); padding-left: 0.75rem; font-style: italic; }
 .screenshot-placeholder { border: 1px dashed rgba(184, 146, 82, 0.48); border-radius: 4px; padding: 1rem; text-align: center; color: var(--muted); margin-top: 0.5rem; }
-.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
-.login-card { width: min(520px, 100%); }
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  background:
+    linear-gradient(90deg, rgba(4, 7, 12, 0.1) 0%, rgba(4, 7, 12, 0.32) 43%, rgba(4, 7, 12, 0.72) 66%, rgba(4, 7, 12, 0.9) 100%),
+    url("prompt-pour-logon-background.png");
+  background-size: cover;
+  background-position: left center;
+  background-repeat: no-repeat;
+}
+
+.login-card {
+  width: min(420px, 100%);
+  margin-right: clamp(0rem, 2vw, 1.5rem);
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.88), rgba(8, 14, 24, 0.92));
+  border: 1px solid rgba(184, 146, 82, 0.5);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  padding: clamp(1.1rem, 2.3vw, 1.5rem);
+}
 .split { display: grid; gap: 1rem; grid-template-columns: 2fr 1fr; }
 @media (max-width: 760px) {
   .split { grid-template-columns: 1fr; }
@@ -508,5 +530,38 @@ form { display: grid; gap: 0.75rem; }
 
   .notice-dismiss {
     align-self: center;
+  }
+}
+
+@media (max-width: 900px) {
+  .login-wrap {
+    justify-content: center;
+    background-position: 28% center;
+  }
+
+  .login-card {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-wrap {
+    align-items: flex-end;
+    background-position: 22% center;
+    background-size: auto 100%;
+  }
+
+  .login-wrap::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(5, 8, 14, 0.5), rgba(5, 8, 14, 0.82));
+    pointer-events: none;
+  }
+
+  .login-card {
+    position: relative;
+    z-index: 1;
+    width: min(460px, 100%);
   }
 }
