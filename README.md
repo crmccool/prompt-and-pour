@@ -79,23 +79,29 @@ Admin actions now run through `supabase/functions/prompt-pour-admin/index.ts` us
 
 Set these secrets in Supabase (Project Settings → Edge Functions → Secrets):
 
-- `PROMPT_POUR_ADMIN_SECRET` (your admin passphrase)
+- `PROMPT_POUR_ADMIN_SECRET` (your admin passphrase used only by `prompt-pour-auth`)
+- `PROMPT_POUR_MEMBER_SECRET` (member passphrase used by `prompt-pour-auth`)
+- `PROMPT_POUR_ADMIN_TOKEN_SECRET` (long random string used to sign/verify temporary admin session tokens)
 - `SUPABASE_URL` (usually pre-provided)
 - `SUPABASE_SERVICE_ROLE_KEY` (usually pre-provided)
 
 ### Deploy function
 
 ```bash
+supabase functions deploy prompt-pour-auth
 supabase functions deploy prompt-pour-admin
 ```
 
 If you need to set secret values from CLI:
 
 ```bash
-supabase secrets set PROMPT_POUR_ADMIN_SECRET=your-admin-passphrase
+supabase secrets set \
+  PROMPT_POUR_ADMIN_SECRET=your-admin-passphrase \
+  PROMPT_POUR_MEMBER_SECRET=your-member-passphrase \
+  PROMPT_POUR_ADMIN_TOKEN_SECRET=replace-with-long-random-string
 ```
 
-The frontend calls `/functions/v1/prompt-pour-admin` with the passphrase and never stores service-role credentials.
+The frontend now exchanges a valid admin passphrase for a short-lived signed admin token via `/functions/v1/prompt-pour-auth`. Only that token is stored in `sessionStorage` for the active browser session and is sent to `/functions/v1/prompt-pour-admin`. Raw passphrases are not persisted client-side, and service-role credentials remain server-only.
 
 ## Current non-goals
 

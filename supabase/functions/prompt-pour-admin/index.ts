@@ -2,17 +2,78 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-prompt-pour-admin-secret",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-prompt-pour-admin-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 type AdminAction = "list_pending" | "list_approved" | "approve" | "archive" | "feature" | "unfeature";
+
+type AdminTokenPayload = {
+  role: string;
+  exp: number;
+};
 
 function jsonResponse(status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function decodeBase64Url(value: string): string {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  return atob(padded);
+}
+
+async function verifyAdminToken(token: string, signingSecret: string): Promise<AdminTokenPayload | null> {
+  const [payloadB64, signatureB64] = token.split(".");
+  if (!payloadB64 || !signatureB64) return null;
+
+  let payloadJson = "";
+  try {
+    payloadJson = decodeBase64Url(payloadB64);
+  } catch {
+    return null;
+  }
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(signingSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+
+  let signature: Uint8Array;
+  try {
+    signature = Uint8Array.from(decodeBase64Url(signatureB64), (char) => char.charCodeAt(0));
+  } catch {
+    return null;
+  }
+
+  const isValid = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    signature,
+    new TextEncoder().encode(payloadJson),
+  );
+
+  if (!isValid) return null;
+
+  let payload: AdminTokenPayload;
+  try {
+    payload = JSON.parse(payloadJson);
+  } catch {
+    return null;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.role !== "admin" || typeof payload.exp !== "number" || payload.exp <= now) {
+    return null;
+  }
+
+  return payload;
 }
 
 Deno.serve(async (req) => {
@@ -26,21 +87,22 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const adminSecret = Deno.env.get("PROMPT_POUR_ADMIN_SECRET");
+  const adminTokenSigningSecret = Deno.env.get("PROMPT_POUR_ADMIN_TOKEN_SECRET");
 
-  if (!supabaseUrl || !serviceRoleKey || !adminSecret) {
+  if (!supabaseUrl || !serviceRoleKey || !adminTokenSigningSecret) {
     return jsonResponse(500, { error: "Missing server configuration." });
   }
 
-  let payload: { action?: AdminAction; id?: string; adminSecret?: string } = {};
+  let payload: { action?: AdminAction; id?: string; adminToken?: string } = {};
   try {
     payload = await req.json();
   } catch {
     return jsonResponse(400, { error: "Invalid JSON body." });
   }
 
-  const providedSecret = req.headers.get("x-prompt-pour-admin-secret") || payload.adminSecret || "";
-  if (!providedSecret || providedSecret !== adminSecret) {
+  const providedToken = req.headers.get("x-prompt-pour-admin-token") || payload.adminToken || "";
+  const tokenPayload = providedToken ? await verifyAdminToken(providedToken, adminTokenSigningSecret) : null;
+  if (!tokenPayload) {
     return jsonResponse(401, { error: "Unauthorized" });
   }
 
