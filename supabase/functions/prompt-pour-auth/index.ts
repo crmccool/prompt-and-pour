@@ -45,8 +45,9 @@ Deno.serve(async (req) => {
   const memberSecret = Deno.env.get("PROMPT_POUR_MEMBER_SECRET");
   const adminSecret = Deno.env.get("PROMPT_POUR_ADMIN_SECRET");
   const adminTokenSigningSecret = Deno.env.get("PROMPT_POUR_ADMIN_TOKEN_SECRET");
+  const memberTokenSigningSecret = Deno.env.get("PROMPT_POUR_MEMBER_TOKEN_SECRET") || adminTokenSigningSecret;
 
-  if (!memberSecret || !adminSecret || !adminTokenSigningSecret) {
+  if (!memberSecret || !adminSecret || !adminTokenSigningSecret || !memberTokenSigningSecret) {
     return jsonResponse(500, { error: "Missing server configuration." });
   }
 
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
 
   if (passphrase === memberSecret) {
     const now = Math.floor(Date.now() / 1000);
-    const memberToken = await signAdminToken(JSON.stringify({ role: "member", exp: now + MEMBER_TOKEN_TTL_SECONDS }), adminTokenSigningSecret);
+    const memberToken = await signAdminToken(JSON.stringify({ role: "member", exp: now + MEMBER_TOKEN_TTL_SECONDS }), memberTokenSigningSecret);
     return jsonResponse(200, { success: true, role: "member", memberToken, expiresInSeconds: MEMBER_TOKEN_TTL_SECONDS });
   }
 
