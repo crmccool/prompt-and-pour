@@ -13,7 +13,7 @@ window.addEventListener("unhandledrejection", (event) => renderFatalError(event.
 const categories = ["Workflow & Admin", "Writing & Communication", "Data & Research", "Learning & Training", "Coding & Prototypes", "Creative & Visual", "Other / Not sure"];
 const statuses = ["Idea", "In Progress", "In Use", "Needs Help"];
 const ADMIN_FUNCTION_NAME = "prompt-pour-admin";
-const MEMBER_PASSPHRASE = window.PROMPT_POUR_MEMBER_PASSPHRASE || "";
+const AUTH_FUNCTION_NAME = "prompt-pour-auth";
 
 const mockProjects = [
   { id: "p1", title: "Meeting Note Distiller", summary: "Turns rough meeting notes into concise action summaries.", creatorName: "Avery Chen", contactEmail: "avery@example.com", categories: ["Workflow & Admin", "Writing & Communication"], status: "In Use", toolsUsed: "ChatGPT, Docs, Zapier", problemSolved: "Busy teams struggled to convert notes into follow-ups.", howAiHelped: "AI generated draft summaries and owner/action checklists.", lessonsLearned: "Template quality matters more than model complexity.", helpWanted: "Looking for better quality checks before sending.", reusableBits: "Prompt skeleton for action-item extraction.", links: ["https://example.com/demo-1"], screenshotPlaceholder: "Screenshot placeholder", reusePermission: "Yes, adapt with credit.", createdDate: "2026-04-02", updatedDate: "2026-04-29", approved: true, featured: true, archived: false },
@@ -27,6 +27,7 @@ function getSupabaseClient() {
   try { return window.supabase.createClient(c.url, c.anonKey); } catch { return null; }
 }
 function getAdminFunctionUrl() { const c = window.PROMPT_POUR_SUPABASE_CONFIG; return c?.url ? `${c.url}/functions/v1/${ADMIN_FUNCTION_NAME}` : ""; }
+function getAuthFunctionUrl() { const c = window.PROMPT_POUR_SUPABASE_CONFIG; return c?.url ? `${c.url}/functions/v1/${AUTH_FUNCTION_NAME}` : ""; }
 
 function mapRowToProject(row) { return { id: row.id, title: row.title || "Untitled Pour", summary: row.summary || "", creatorName: row.creator_name || "Anonymous", contactEmail: row.contact_email || "", categories: Array.isArray(row.categories) && row.categories.length ? row.categories : ["Other / Not sure"], status: row.status || "Idea", toolsUsed: Array.isArray(row.tools_used) ? row.tools_used.join(", ") : row.tools_used || "", problemSolved: row.problem_statement || "", howAiHelped: row.ai_use || "", lessonsLearned: row.lessons_learned || "", helpWanted: row.help_wanted || "", reusableBits: row.reusable_bits || "", links: Array.isArray(row.links) ? row.links : [], screenshotPlaceholder: "Screenshot placeholder", reusePermission: row.reuse_permission || "", createdDate: (row.created_at || "").slice(0, 10), updatedDate: (row.updated_at || row.created_at || "").slice(0, 10), approved: !!row.approved, featured: !!row.featured, archived: !!row.archived }; }
 
@@ -76,34 +77,50 @@ async function login() {
   state.loginError = "";
   state.adminError = "";
 
-  try {
-    state.adminSecret = passphrase;
-    const pending = await callAdminAction("list_pending");
-    const approved = await callAdminAction("list_approved");
-    state.role = "admin";
-    state.loggedIn = true;
-    sessionStorage.setItem("promptPourAdminSecret", passphrase);
-    state.adminPending = (pending.rows || []).map(mapRowToProject);
-    state.adminApproved = (approved.rows || []).map(mapRowToProject);
-    setRoute("admin");
-    return;
-  } catch (_error) {
-    state.adminSecret = "";
-    sessionStorage.removeItem("promptPourAdminSecret");
-    state.adminPending = [];
-    state.adminApproved = [];
-  }
-
-  const memberMatch = !MEMBER_PASSPHRASE || passphrase === MEMBER_PASSPHRASE;
-  if (!memberMatch) {
+  const authUrl = getAuthFunctionUrl();
+  if (!authUrl) {
     state.loginError = "That passphrase did not open the door.";
     render();
     return;
   }
 
-  state.role = "member";
-  state.loggedIn = true;
-  setRoute("dashboard");
+  try {
+    const response = await fetch(authUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passphrase }),
+    });
+    const body = await response.json();
+
+    if (!response.ok || !body?.role) {
+      throw new Error(body?.error || "Unauthorized");
+    }
+
+    if (body.role === "admin") {
+      state.adminSecret = passphrase;
+      sessionStorage.setItem("promptPourAdminSecret", passphrase);
+      state.role = "admin";
+      state.loggedIn = true;
+      await refreshAdminLists();
+      setRoute("admin");
+      return;
+    }
+
+    state.adminSecret = "";
+    sessionStorage.removeItem("promptPourAdminSecret");
+    state.adminPending = [];
+    state.adminApproved = [];
+    state.role = "member";
+    state.loggedIn = true;
+    setRoute("dashboard");
+  } catch (_error) {
+    state.adminSecret = "";
+    sessionStorage.removeItem("promptPourAdminSecret");
+    state.adminPending = [];
+    state.adminApproved = [];
+    state.loginError = "That passphrase did not open the door.";
+    render();
+  }
 }
 function logout() { state.loggedIn = false; state.role = "member"; state.loginError = ""; setRoute("login"); }
 function setCategoryFilter(v) { state.selectedCategory = v; render(); }
