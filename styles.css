@@ -44,16 +44,38 @@ h1, h2, h3, .brand {
 .topbar {
   background:
     linear-gradient(90deg, rgba(6, 10, 17, 0.97) 0%, rgba(6, 10, 17, 0.94) 48%, rgba(6, 10, 17, 0.74) 66%, rgba(6, 10, 17, 0.5) 100%),
-    linear-gradient(180deg, rgba(6, 10, 17, 0.97), rgba(10, 16, 27, 0.95)),
-    url("deco-bartender.png");
-  background-position: left top, left top, 85% center;
-  background-size: 100% 100%, 100% 100%, auto 100%;
+    linear-gradient(180deg, rgba(6, 10, 17, 0.97), rgba(10, 16, 27, 0.95));
+  background-position: left top, left top;
+  background-size: 100% 100%, 100% 100%;
   background-repeat: no-repeat;
   border-bottom: 1px solid rgba(184, 146, 82, 0.45);
   padding: 0.65rem 1rem 0.85rem;
+  position: relative;
   position: sticky;
   top: 0;
   z-index: 20;
+  overflow: hidden;
+}
+
+.topbar-art {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: min(460px, 46vw);
+  object-fit: cover;
+  object-position: right center;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.88;
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.7) 28%, rgba(0, 0, 0, 1) 52%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.7) 28%, rgba(0, 0, 0, 1) 52%);
+}
+
+.topbar-brand-row,
+.topbar-nav-row {
+  position: relative;
+  z-index: 1;
 }
 
 .topbar-brand-row {
@@ -347,8 +369,10 @@ form { display: grid; gap: 0.75rem; }
   .hero::before { inset-inline: 8%; }
   .topbar {
     padding-inline: 0.7rem;
-    background-position: left top, left top, right -22px center;
-    background-size: 100% 100%, 100% 100%, auto 106%;
+  }
+  .topbar-art {
+    width: min(280px, 42vw);
+    opacity: 0.5;
   }
   .topbar-brand-row {
     gap: 0.6rem;
