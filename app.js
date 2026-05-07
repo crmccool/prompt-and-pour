@@ -247,6 +247,7 @@ async function login() {
     state.adminArchived = [];
     state.role = "member";
     state.loggedIn = true;
+    await loadProjects();
     setRoute("dashboard");
   } catch (error) {
     state.adminToken = "";
