@@ -11,7 +11,7 @@ window.onerror = (_m, _s, _l, _c, error) => renderFatalError(error || _m);
 window.addEventListener("unhandledrejection", (event) => renderFatalError(event.reason || "Unhandled promise rejection"));
 
 const categories = ["Workflow & Admin", "Writing & Communication", "Data & Research", "Learning & Training", "Coding & Prototypes", "Creative & Visual", "Other / Not sure"];
-const stages = ["Idea", "In Progress", "Prototype", "In Use", "Lesson Learned"];
+const stages = ["Idea", "In Progress", "Prototype", "In Use"];
 const ADMIN_FUNCTION_NAME = "prompt-pour-admin";
 const AUTH_FUNCTION_NAME = "prompt-pour-auth";
 
