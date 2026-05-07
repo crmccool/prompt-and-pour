@@ -232,6 +232,39 @@ input[type="file"]::file-selector-button {
 
 .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(250px, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.dashboard-layout .panel {
+  margin-top: 0;
+}
+
+.fresh-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.favorites-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 900px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-layout.has-favorites .dashboard-favorites {
+    order: -1;
+  }
+
+  .fresh-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .card {
   background: linear-gradient(180deg, var(--panel-soft), #111d30);
   border-radius: 4px;

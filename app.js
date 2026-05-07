@@ -105,7 +105,16 @@ function memberDetailPanel(p) {
 }
 function projectCard(p) { return `<article class="card"><h3>${p.title}</h3><div class="title-rule"></div>${memberCardScreenshot(p)}<p>${p.summary}</p><p class="muted"><strong>Creator:</strong> ${p.creatorName}</p><div class="badges">${p.categories.map((c) => `<span class="badge">${c}</span>`).join("")}<span class="badge status">Stage: ${escapeHtml(p.status || "Idea")}</span>${p.featured ? '<span class="badge">House Favorite</span>' : ""}</div><details class="member-pour-details"><summary>View details</summary>${memberDetailPanel(p)}<button class="button" type="button" onclick="this.closest('details').open=false">Close details</button></details></article>`; }
 function loginPage() { return `<div class="login-wrap"><section class="panel login-card deco-border"><h1>Prompt &amp; Pour</h1><p class="muted">Speak the passphrase to open the door.</p><form onsubmit="event.preventDefault(); login();"><label>Passphrase<input id="access-passphrase-input" type="password" required /></label><button class="button" type="submit">Enter</button>${state.loginError ? `<p class="muted"><strong>${state.loginError}</strong></p>` : ""}</form></section></div>`; }
-function dashboardPage() { const approved = state.projects.filter((p) => p.approved && !p.archived); const fresh = approved.slice(0, 3); const favorites = approved.filter((p) => p.featured); return `<section class="panel section-featured"><h2 class="section-title">House Favorites</h2><div class="grid">${favorites.map(projectCard).join("") || "<p>No featured cards yet.</p>"}</div></section><section class="panel" style="margin-top:1rem;"><h2 class="section-title">Fresh Pours</h2><div class="grid">${fresh.map(projectCard).join("") || "<p>No approved pours yet.</p>"}</div></section>`; }
+function dashboardPage() {
+  const approved = state.projects.filter((p) => p.approved && !p.archived);
+  const favorites = approved.filter((p) => p.featured === true);
+  const fresh = approved.filter((p) => p.featured !== true);
+
+  const favoritesSection = `<section class="panel section-featured dashboard-favorites"><h2 class="section-title">House Favorites</h2><div class="grid favorites-grid">${favorites.map(projectCard).join("") || "<p class=\"muted\">No house favorites yet.</p>"}</div></section>`;
+  const freshSection = `<section class="panel dashboard-fresh"><h2 class="section-title">Fresh Pours</h2><div class="grid fresh-grid">${fresh.map(projectCard).join("") || "<p>No approved pours yet.</p>"}</div></section>`;
+
+  return `<div class="dashboard-layout ${favorites.length ? "has-favorites" : "no-favorites"}">${freshSection}${favoritesSection}</div>`;
+}
 function galleryPage() { const visible = state.projects.filter((p) => p.approved && !p.archived && matchesFilters(p)); return `<section class="panel hero"><h1 class="section-title">House Pours</h1>${filterControls()}<div class="grid">${visible.map(projectCard).join("") || "<p>No matching pours yet.</p>"}</div></section>`; }
 function normalizeListField(v) { if (Array.isArray(v)) return v; if (!v) return []; return v.toString().split(",").map((x) => x.trim()).filter(Boolean); }
 async function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||""));reader.onerror=()=>reject(new Error("Unable to read screenshot file."));reader.readAsDataURL(file);});}
