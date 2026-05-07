@@ -76,6 +76,15 @@ async function verifyAdminToken(token: string, signingSecret: string): Promise<A
   return payload;
 }
 
+
+async function attachSignedScreenshotUrls(supabase: ReturnType<typeof createClient>, rows: Record<string, unknown>[]) {
+  const paths = rows.map((row) => String(row.screenshot_url || "")).filter(Boolean);
+  if (!paths.length) return rows;
+  const { data } = await supabase.storage.from("prompt-pour-screenshots").createSignedUrls(paths, 900);
+  const signedMap = new Map<string, string>();
+  data?.forEach((entry, idx) => signedMap.set(paths[idx], entry?.signedUrl || ""));
+  return rows.map((row) => ({ ...row, screenshot_signed_url: signedMap.get(String(row.screenshot_url || "")) || "" }));
+}
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -124,7 +133,7 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (error) return jsonResponse(500, { error: error.message });
-    return jsonResponse(200, { rows: data });
+    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, (data || []) as Record<string, unknown>[]) });
   }
 
   if (action === "list_approved") {
@@ -136,7 +145,7 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (error) return jsonResponse(500, { error: error.message });
-    return jsonResponse(200, { rows: data });
+    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, (data || []) as Record<string, unknown>[]) });
   }
 
   if (action === "list_archived") {
@@ -147,7 +156,7 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (error) return jsonResponse(500, { error: error.message });
-    return jsonResponse(200, { rows: data });
+    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, (data || []) as Record<string, unknown>[]) });
   }
 
   const id = payload.id;

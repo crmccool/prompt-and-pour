@@ -627,3 +627,5 @@ form { display: grid; gap: 0.75rem; }
     padding: 0.75rem;
   }
 }
+
+.member-screenshot { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid rgba(184,146,82,.35); box-shadow: 0 8px 20px rgba(0,0,0,.35); }

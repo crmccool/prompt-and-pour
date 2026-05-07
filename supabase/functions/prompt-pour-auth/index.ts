@@ -5,6 +5,7 @@ const corsHeaders = {
 };
 
 const ADMIN_TOKEN_TTL_SECONDS = 60 * 60 * 4;
+const MEMBER_TOKEN_TTL_SECONDS = 60 * 60 * 4;
 
 function jsonResponse(status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
@@ -68,7 +69,9 @@ Deno.serve(async (req) => {
   }
 
   if (passphrase === memberSecret) {
-    return jsonResponse(200, { success: true, role: "member" });
+    const now = Math.floor(Date.now() / 1000);
+    const memberToken = await signAdminToken(JSON.stringify({ role: "member", exp: now + MEMBER_TOKEN_TTL_SECONDS }), adminTokenSigningSecret);
+    return jsonResponse(200, { success: true, role: "member", memberToken, expiresInSeconds: MEMBER_TOKEN_TTL_SECONDS });
   }
 
   return jsonResponse(401, { success: false, error: "That passphrase did not open the door." });
