@@ -19,7 +19,7 @@ const mockProjects = [
   { id: "p1", title: "Meeting Note Distiller", summary: "Turns rough meeting notes into concise action summaries.", creatorName: "Avery Chen", contactEmail: "avery@example.com", categories: ["Workflow & Admin", "Writing & Communication"], status: "In Use", toolsUsed: "ChatGPT, Docs, Zapier", problemSolved: "Busy teams struggled to convert notes into follow-ups.", howAiHelped: "AI generated draft summaries and owner/action checklists.", lessonsLearned: "Template quality matters more than model complexity.", helpWanted: "Looking for better quality checks before sending.", reusableBits: "Prompt skeleton for action-item extraction.", links: ["https://example.com/demo-1"], screenshotPlaceholder: "Screenshot placeholder", reusePermission: "Yes, adapt with credit.", createdDate: "2026-04-02", updatedDate: "2026-04-29", approved: true, featured: true, archived: false },
 ];
 
-const state = { loggedIn: false, role: "member", route: "login", selectedCategory: "All", selectedStatus: "All", selectedProjectId: null, projects: [...mockProjects], dataSource: "mock", dataStatusReason: "Supabase not checked yet.", notice: "", dashboardNotice: "", loginError: "", adminSecret: sessionStorage.getItem("promptPourAdminSecret") || "", adminPending: [], adminApproved: [], adminNotice: "", adminError: "", adminLoading: false };
+const state = { loggedIn: false, role: "member", route: "login", selectedCategory: "All", selectedStatus: "All", selectedProjectId: null, projects: [...mockProjects], dataSource: "mock", dataStatusReason: "Supabase not checked yet.", notice: "", dashboardNotice: "", loginError: "", adminToken: sessionStorage.getItem("promptPourAdminToken") || "", adminPending: [], adminApproved: [], adminNotice: "", adminError: "", adminLoading: false };
 
 function getSupabaseClient() {
   const c = window.PROMPT_POUR_SUPABASE_CONFIG;
@@ -33,9 +33,9 @@ function mapRowToProject(row) { return { id: row.id, title: row.title || "Untitl
 
 async function loadProjects() { const s = getSupabaseClient(); if (!s) return render(); const { data, error } = await s.from("prompt_pour_pours").select("*").eq("approved", true).eq("archived", false).order("created_at", { ascending: false }); if (!error) { state.projects = data.map(mapRowToProject); state.dataSource = "supabase"; } render(); }
 
-function setRoute(route, projectId = null) { state.route = route === "admin" && state.role !== "admin" && !state.adminSecret ? "dashboard" : route; state.selectedProjectId = projectId; render(); }
+function setRoute(route, projectId = null) { state.route = route === "admin" && state.role !== "admin" && !state.adminToken ? "dashboard" : route; state.selectedProjectId = projectId; render(); }
 const navButton = (label, route) => `<button class="${state.route === route ? "active" : ""}" onclick="setRoute('${route}')">${label}</button>`;
-function topNav() { if (!state.loggedIn) return ""; return `<header class="topbar"><div class="topbar-row"><div class="brand">Prompt & Pour <small>Private Exchange</small></div><nav class="nav">${navButton("Home", "dashboard")}${navButton("House Pours", "gallery")}${navButton("Share a Build", "share")}${state.role === "admin" || state.adminSecret ? navButton("Admin", "admin") : ""}${navButton("House Rules", "rules")}<button onclick="logout()">Exit</button></nav></div></header>`; }
+function topNav() { if (!state.loggedIn) return ""; return `<header class="topbar"><div class="topbar-row"><div class="brand">Prompt & Pour <small>Private Exchange</small></div><nav class="nav">${navButton("Home", "dashboard")}${navButton("House Pours", "gallery")}${navButton("Share a Build", "share")}${state.role === "admin" || state.adminToken ? navButton("Admin", "admin") : ""}${navButton("House Rules", "rules")}<button onclick="logout()">Exit</button></nav></div></header>`; }
 function dataStatusPill() { return `<aside class="data-status ${state.dataSource === "supabase" ? "ok" : "warn"}"><strong>Data mode:</strong> ${state.dataSource === "supabase" ? "Supabase connected" : "Mock fallback"}</aside>`; }
 function filterControls() { return `<div class="filters"><label>Category<select onchange="setCategoryFilter(this.value)"><option>All</option>${categories.map((c) => `<option ${c === state.selectedCategory ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Status<select onchange="setStatusFilter(this.value)"><option>All</option>${statuses.map((s) => `<option ${s === state.selectedStatus ? "selected" : ""}>${s}</option>`).join("")}</select></label></div>`; }
 const matchesFilters = (p) => (state.selectedCategory === "All" || p.categories.includes(state.selectedCategory)) && (state.selectedStatus === "All" || p.status === state.selectedStatus);
@@ -50,10 +50,10 @@ async function submitPour(e) { const f = new FormData(e.target); const payload =
 function sharePage() { return `<section class="panel hero"><h1 class="section-title">Share a Build</h1><form onsubmit="event.preventDefault(); submitPour(event);"><div class="two-col"><label>Title<input name="title" required /></label><label>Creator Name<input name="creatorName" required /></label></div><label>Summary<textarea name="summary"></textarea></label><div class="two-col"><label>Category<select name="category">${categories.map((c) => `<option>${c}</option>`).join("")}</select></label><label>Status<select name="status">${statuses.map((s) => `<option>${s}</option>`).join("")}</select></label></div><label>Tools Used<input name="toolsUsed" /></label><label>Problem Being Solved<textarea name="problemSolved"></textarea></label><label>How AI Helped<textarea name="howAiHelped"></textarea></label><label>Lessons Learned<textarea name="lessonsLearned"></textarea></label><label>Help Wanted<textarea name="helpWanted"></textarea></label><label>Reusable Bits<textarea name="reusableBits"></textarea></label><label>Links<input name="links" /></label><button class="button" type="submit">Submit</button></form></section>`; }
 function projectDetailPage() { const p = state.projects.find((x) => String(x.id) === String(state.selectedProjectId)); return p ? `<section class="panel"><h1 class="section-title">${p.title}</h1><p>${p.summary}</p></section>` : `<section class="panel"><p>Project not found.</p></section>`; }
 
-async function callAdminAction(action, id) { const u = getAdminFunctionUrl(); const r = await fetch(u, { method: "POST", headers: { "Content-Type": "application/json", "x-prompt-pour-admin-secret": state.adminSecret }, body: JSON.stringify({ action, id }) }); const b = await r.json(); if (!r.ok) throw new Error(b.error || "Action failed"); return b; }
+async function callAdminAction(action, id) { const u = getAdminFunctionUrl(); const r = await fetch(u, { method: "POST", headers: { "Content-Type": "application/json", "x-prompt-pour-admin-token": state.adminToken }, body: JSON.stringify({ action, id }) }); const b = await r.json(); if (!r.ok) throw new Error(b.error || "Action failed"); return b; }
 async function refreshAdminLists() { state.adminLoading = true; render(); try { const p = await callAdminAction("list_pending"); const a = await callAdminAction("list_approved"); state.adminPending = (p.rows || []).map(mapRowToProject); state.adminApproved = (a.rows || []).map(mapRowToProject); state.adminError = ""; } catch (e) { state.adminError = e.message; } state.adminLoading = false; render(); }
-async function adminLogin() { const secret = document.getElementById("admin-secret-input")?.value?.trim(); if (!secret) return; state.adminSecret = secret; sessionStorage.setItem("promptPourAdminSecret", secret); await refreshAdminLists(); }
-function clearAdminSession() { state.adminSecret = ""; sessionStorage.removeItem("promptPourAdminSecret"); state.adminPending = []; state.adminApproved = []; render(); }
+async function adminLogin() { const passphrase = document.getElementById("admin-secret-input")?.value?.trim(); if (!passphrase) return; const authUrl = getAuthFunctionUrl(); if (!authUrl) return; try { const response = await fetch(authUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ passphrase }) }); const body = await response.json(); if (!response.ok || body?.role !== "admin" || !body?.adminToken) throw new Error(body?.error || "Unauthorized"); state.adminToken = body.adminToken; sessionStorage.setItem("promptPourAdminToken", state.adminToken); state.adminError = ""; await refreshAdminLists(); } catch (error) { state.adminToken = ""; sessionStorage.removeItem("promptPourAdminToken"); state.adminPending = []; state.adminApproved = []; state.adminError = error.message || "That passphrase did not open the door."; render(); } }
+function clearAdminSession() { state.adminToken = ""; sessionStorage.removeItem("promptPourAdminToken"); state.adminPending = []; state.adminApproved = []; render(); }
 async function moderatePour(action, id) { await callAdminAction(action, id); await refreshAdminLists(); await loadProjects(); }
 function adminField(label, value) { return value ? `<p><strong>${label}:</strong> ${value}</p>` : ""; }
 function adminListField(label, values) { return Array.isArray(values) && values.length ? adminField(label, values.join(", ")) : ""; }
@@ -68,7 +68,7 @@ function adminCard(p, buttons, showExpandedDetails = false) {
   ].join("");
   return `<article class="card"><h3>${p.title}</h3>${adminField("Creator", p.creatorName)}${adminField("Contact Email", p.contactEmail)}${adminListField("Categories", p.categories)}${adminField("Status", p.status)}${adminField("Summary", p.summary)}${adminField("Created Date", p.createdDate)}${showExpandedDetails && fullDetails ? `<details><summary>View full submission</summary>${fullDetails}</details>` : fullDetails}<div class="admin-actions">${buttons}</div></article>`;
 }
-function adminPage() { if (!state.adminSecret) return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><label>Admin Passphrase<input id="admin-secret-input" type="password" /></label><button class="button" onclick="adminLogin()">Unlock Moderation</button>${state.adminError ? `<p class="muted"><strong>${state.adminError}</strong></p>` : ""}</section>`; return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><div class="admin-toolbar"><button class="button" onclick="refreshAdminLists()">Refresh</button><button class="button" onclick="clearAdminSession()">Lock</button></div>${state.adminLoading ? "<p class='muted'>Loading moderation lists...</p>" : ""}<h2 class="section-title">Pending</h2><div class="grid">${state.adminPending.map((p) => adminCard(p, `<button class='button' onclick=\"moderatePour('approve','${p.id}')\">Approve</button><button class='button' onclick=\"moderatePour('archive','${p.id}')\">Archive</button>`, true)).join("") || "<p>No pending pours.</p>"}</div><h2 class="section-title">Approved</h2><div class="grid">${state.adminApproved.map((p) => adminCard(p, `${p.featured ? `<button class='button' onclick=\"moderatePour('unfeature','${p.id}')\">Unfeature</button>` : `<button class='button' onclick=\"moderatePour('feature','${p.id}')\">Feature</button>`}<button class='button' onclick=\"moderatePour('archive','${p.id}')\">Archive</button>`)).join("") || "<p>No approved pours found.</p>"}</div></section>`; }
+function adminPage() { if (!state.adminToken) return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><label>Admin Passphrase<input id="admin-secret-input" type="password" /></label><button class="button" onclick="adminLogin()">Unlock Moderation</button>${state.adminError ? `<p class="muted"><strong>${state.adminError}</strong></p>` : ""}</section>`; return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><div class="admin-toolbar"><button class="button" onclick="refreshAdminLists()">Refresh</button><button class="button" onclick="clearAdminSession()">Lock</button></div>${state.adminLoading ? "<p class='muted'>Loading moderation lists...</p>" : ""}<h2 class="section-title">Pending</h2><div class="grid">${state.adminPending.map((p) => adminCard(p, `<button class='button' onclick=\"moderatePour('approve','${p.id}')\">Approve</button><button class='button' onclick=\"moderatePour('archive','${p.id}')\">Archive</button>`, true)).join("") || "<p>No pending pours.</p>"}</div><h2 class="section-title">Approved</h2><div class="grid">${state.adminApproved.map((p) => adminCard(p, `${p.featured ? `<button class='button' onclick=\"moderatePour('unfeature','${p.id}')\">Unfeature</button>` : `<button class='button' onclick=\"moderatePour('feature','${p.id}')\">Feature</button>`}<button class='button' onclick=\"moderatePour('archive','${p.id}')\">Archive</button>`)).join("") || "<p>No approved pours found.</p>"}</div></section>`; }
 function rulesPage() { return `<section class="panel"><h1>House Rules</h1><p class="rule-quote">No empty glasses.</p></section>`; }
 async function login() {
   const passphrase = document.getElementById("access-passphrase-input")?.value?.trim();
@@ -97,8 +97,11 @@ async function login() {
     }
 
     if (body.role === "admin") {
-      state.adminSecret = passphrase;
-      sessionStorage.setItem("promptPourAdminSecret", passphrase);
+      if (!body?.adminToken) {
+        throw new Error("Missing admin session token");
+      }
+      state.adminToken = body.adminToken;
+      sessionStorage.setItem("promptPourAdminToken", body.adminToken);
       state.role = "admin";
       state.loggedIn = true;
       await refreshAdminLists();
@@ -106,16 +109,16 @@ async function login() {
       return;
     }
 
-    state.adminSecret = "";
-    sessionStorage.removeItem("promptPourAdminSecret");
+    state.adminToken = "";
+    sessionStorage.removeItem("promptPourAdminToken");
     state.adminPending = [];
     state.adminApproved = [];
     state.role = "member";
     state.loggedIn = true;
     setRoute("dashboard");
   } catch (_error) {
-    state.adminSecret = "";
-    sessionStorage.removeItem("promptPourAdminSecret");
+    state.adminToken = "";
+    sessionStorage.removeItem("promptPourAdminToken");
     state.adminPending = [];
     state.adminApproved = [];
     state.loginError = "That passphrase did not open the door.";
@@ -128,5 +131,5 @@ function setStatusFilter(v) { state.selectedStatus = v; render(); }
 function render() { const app = document.getElementById("app"); if (!app) return; if (!state.loggedIn) app.innerHTML = loginPage(); else { const pages = { dashboard: dashboardPage, gallery: galleryPage, share: sharePage, admin: adminPage, rules: rulesPage, project: projectDetailPage }; app.innerHTML = `<div class="layout">${topNav()}<main class="main">${(pages[state.route] || dashboardPage)()}</main>${dataStatusPill()}</div>`; } }
 Object.assign(window, { setRoute, login, logout, setCategoryFilter, setStatusFilter, submitPour, adminLogin, clearAdminSession, refreshAdminLists, moderatePour });
 
-function startApp() { render(); void loadProjects(); if (state.adminSecret) void refreshAdminLists(); }
+function startApp() { render(); void loadProjects(); if (state.adminToken) void refreshAdminLists(); }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startApp, { once: true }); else startApp();
