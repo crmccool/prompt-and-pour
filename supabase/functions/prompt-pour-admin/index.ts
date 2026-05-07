@@ -170,22 +170,22 @@ Deno.serve(async (req) => {
       "reusable_bits",
       "links",
       "screenshot_url",
-      "reuse_permission",
-    ] as const;
+      "reuse_permission"
+    ];
 
     const updates = payload.updates;
     if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
       return jsonResponse(400, { error: "Missing updates payload." });
     }
 
-    const disallowedKeys = Object.keys(updates).filter((key) => !editableFields.includes(key as (typeof editableFields)[number]));
+    const disallowedKeys = Object.keys(updates).filter((key) => !editableFields.includes(key));
     if (disallowedKeys.length) {
       return jsonResponse(400, { error: `Unsupported fields: ${disallowedKeys.join(", ")}` });
     }
 
     const safeUpdatePayload: Record<string, unknown> = {};
     for (const field of editableFields) {
-      if (Object.hasOwn(updates, field)) safeUpdatePayload[field] = updates[field];
+      if (Object.prototype.hasOwnProperty.call(updates, field)) safeUpdatePayload[field] = updates[field];
     }
 
     if (!Object.keys(safeUpdatePayload).length) {
