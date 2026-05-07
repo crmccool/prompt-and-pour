@@ -263,6 +263,8 @@ textarea:focus-visible {
 .filters { margin-bottom: 1rem; }
 .admin-actions, .admin-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .admin-tabs { margin: 0.75rem 0 1rem; }
+.admin-edit-form { display: grid; gap: 0.6rem; }
+.admin-edit-form textarea { min-height: 72px; }
 
 input, select, textarea {
   width: 100%;

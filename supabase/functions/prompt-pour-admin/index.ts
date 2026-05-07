@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type AdminAction = "list_pending" | "list_approved" | "list_archived" | "approve" | "archive" | "restore" | "feature" | "unfeature";
+type AdminAction = "list_pending" | "list_approved" | "list_archived" | "approve" | "archive" | "restore" | "feature" | "unfeature" | "edit_pour";
 
 type AdminTokenPayload = {
   role: string;
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     return jsonResponse(500, { error: "Missing server configuration." });
   }
 
-  let payload: { action?: AdminAction; id?: string; adminToken?: string } = {};
+  let payload: { action?: AdminAction; id?: string; adminToken?: string; updates?: Record<string, unknown> } = {};
   try {
     payload = await req.json();
   } catch {
@@ -153,6 +153,54 @@ Deno.serve(async (req) => {
   const id = payload.id;
   if (!id) {
     return jsonResponse(400, { error: "Missing id for action." });
+  }
+
+  if (action === "edit_pour") {
+    const editableFields = [
+      "title",
+      "summary",
+      "creator_name",
+      "creator_email",
+      "categories",
+      "tools_used",
+      "problem_statement",
+      "ai_use",
+      "lessons_learned",
+      "help_wanted",
+      "reusable_bits",
+      "links",
+      "screenshot_url",
+      "reuse_permission",
+    ] as const;
+
+    const updates = payload.updates;
+    if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
+      return jsonResponse(400, { error: "Missing updates payload." });
+    }
+
+    const disallowedKeys = Object.keys(updates).filter((key) => !editableFields.includes(key as (typeof editableFields)[number]));
+    if (disallowedKeys.length) {
+      return jsonResponse(400, { error: `Unsupported fields: ${disallowedKeys.join(", ")}` });
+    }
+
+    const safeUpdatePayload: Record<string, unknown> = {};
+    for (const field of editableFields) {
+      if (Object.hasOwn(updates, field)) safeUpdatePayload[field] = updates[field];
+    }
+
+    if (!Object.keys(safeUpdatePayload).length) {
+      return jsonResponse(400, { error: "No editable fields provided." });
+    }
+
+    const { data, error } = await supabase
+      .from("prompt_pour_pours")
+      .update(safeUpdatePayload)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) return jsonResponse(500, { error: error.message });
+    return jsonResponse(200, { row: data });
   }
 
   const updatePayload: Record<string, boolean> =
