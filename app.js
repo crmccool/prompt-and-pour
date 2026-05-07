@@ -26,8 +26,17 @@ const state = { loggedIn: false, role: "member", route: "login", selectedCategor
 
 function getSupabaseClient() {
   const c = window.PROMPT_POUR_SUPABASE_CONFIG;
-  if (!(c && c.url && c.anonKey && window.supabase?.createClient)) { state.dataStatusReason = "Supabase config missing."; return null; }
-  try { return window.supabase.createClient(c.url, c.anonKey); } catch { return null; }
+  if (!c?.url || !c?.anonKey) {
+    state.dataStatusReason = "Supabase config missing.";
+    console.warn("[Prompt & Pour] Falling back to mock data: missing Supabase config.");
+    return null;
+  }
+  if (!window.supabase?.createClient) {
+    state.dataStatusReason = "Supabase client library missing.";
+    console.warn("[Prompt & Pour] Falling back to mock data: Supabase client library is unavailable.");
+    return null;
+  }
+  try { return window.supabase.createClient(c.url, c.anonKey); } catch (error) { state.dataStatusReason = "Supabase client failed to initialize."; console.error("[Prompt & Pour] Failed to initialize Supabase client.", error); return null; }
 }
 function getAdminFunctionUrl() { const c = window.PROMPT_POUR_SUPABASE_CONFIG; return c?.url ? `${c.url}/functions/v1/${ADMIN_FUNCTION_NAME}` : ""; }
 function getAuthFunctionUrl() { const c = window.PROMPT_POUR_SUPABASE_CONFIG; return c?.url ? `${c.url}/functions/v1/${AUTH_FUNCTION_NAME}` : ""; }
@@ -35,7 +44,7 @@ function getMemberFunctionUrl() { const c = window.PROMPT_POUR_SUPABASE_CONFIG; 
 
 function mapRowToProject(row) { return { id: row.id, title: row.title || "Untitled Pour", summary: row.summary || "", creatorName: row.creator_name || "Anonymous", contactEmail: row.creator_email || row.contact_email || "", categories: Array.isArray(row.categories) && row.categories.length ? row.categories : ["Other / Not sure"], status: row.status || "Idea", toolsUsed: Array.isArray(row.tools_used) ? row.tools_used.join(", ") : row.tools_used || "", problemSolved: row.problem_statement || "", howAiHelped: row.ai_use || "", lessonsLearned: row.lessons_learned || "", helpWanted: row.help_wanted || "", reusableBits: row.reusable_bits || "", links: Array.isArray(row.links) ? row.links : [], screenshotUrl: row.screenshot_signed_url || row.screenshot_url || "", screenshotPlaceholder: "Screenshot placeholder", reusePermission: row.reuse_permission || "", createdDate: (row.created_at || "").slice(0, 10), updatedDate: (row.updated_at || row.created_at || "").slice(0, 10), approved: !!row.approved, featured: !!row.featured, archived: !!row.archived }; }
 
-async function loadProjects() { const s = getSupabaseClient(); if (!s) return render(); const { data, error } = await s.from("prompt_pour_pours").select("*").eq("approved", true).eq("archived", false).order("created_at", { ascending: false }); if (!error) { state.projects = data.map(mapRowToProject); await signMemberScreenshotUrls(state.projects); state.dataSource = "supabase"; } render(); }
+async function loadProjects() { const s = getSupabaseClient(); if (!s) return render(); try { const { data, error } = await s.from("prompt_pour_pours").select("*").eq("approved", true).eq("archived", false).order("created_at", { ascending: false }); if (error) { state.dataStatusReason = `Supabase query failed: ${error.message}`; console.error("[Prompt & Pour] Failed to load approved pours from Supabase.", error); render(); return; } state.projects = data.map(mapRowToProject); await signMemberScreenshotUrls(state.projects); state.dataSource = "supabase"; state.dataStatusReason = "Supabase connected."; } catch (error) { state.dataStatusReason = "Supabase request failed."; console.error("[Prompt & Pour] Unexpected error while loading projects.", error); } render(); }
 
 function setRoute(route, projectId = null) { state.route = route === "admin" && state.role !== "admin" && !state.adminToken ? "dashboard" : route; state.selectedProjectId = projectId; render(); }
 const navButton = (label, route) => `<button class="${state.route === route ? "active" : ""}" onclick="setRoute('${route}')">${label}</button>`;
@@ -72,7 +81,7 @@ function dashboardPage() { const approved = state.projects.filter((p) => p.appro
 function galleryPage() { const visible = state.projects.filter((p) => p.approved && !p.archived && matchesFilters(p)); return `<section class="panel hero"><h1 class="section-title">House Pours</h1>${filterControls()}<div class="grid">${visible.map(projectCard).join("") || "<p>No matching pours yet.</p>"}</div></section>`; }
 function normalizeListField(v) { if (Array.isArray(v)) return v; if (!v) return []; return v.toString().split(",").map((x) => x.trim()).filter(Boolean); }
 async function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||""));reader.onerror=()=>reject(new Error("Unable to read screenshot file."));reader.readAsDataURL(file);});}
-async function signMemberScreenshotUrls(projects){const paths=projects.map((p)=>p.screenshotUrl).filter(Boolean);if(!paths.length||!state.memberToken)return;const u=getMemberFunctionUrl();if(!u)return;const r=await fetch(u,{method:"POST",headers:{"Content-Type":"application/json","x-prompt-pour-member-token":state.memberToken},body:JSON.stringify({action:"sign_member_screenshots",paths})});if(!r.ok)return;const b=await r.json();for(const project of projects){if(project.screenshotUrl&&b?.signed?.[project.screenshotUrl])project.screenshotUrl=b.signed[project.screenshotUrl];}}
+async function signMemberScreenshotUrls(projects){const paths=projects.map((p)=>p.screenshotUrl).filter(Boolean);if(!paths.length||!state.memberToken)return;const u=getMemberFunctionUrl();if(!u)return;const r=await fetch(u,{method:"POST",headers:{"Content-Type":"application/json","x-prompt-pour-member-token":state.memberToken},body:JSON.stringify({action:"sign_member_screenshots",paths})});if(!r.ok){console.warn("[Prompt & Pour] Unable to sign screenshot URLs for member view.",r.status);return;}const b=await r.json();for(const project of projects){if(project.screenshotUrl&&b?.signed?.[project.screenshotUrl])project.screenshotUrl=b.signed[project.screenshotUrl];}}
 async function submitPour(e) { const f = new FormData(e.target); const screenshotFile = f.get("screenshot"); const payload = { title: `${f.get("title") || ""}`.trim(), creator_name: `${f.get("creatorName") || ""}`.trim(), summary: `${f.get("summary") || ""}`.trim(), categories: normalizeListField(f.get("category")), status: `${f.get("status") || "Idea"}`, tools_used: normalizeListField(f.get("toolsUsed")), problem_statement: `${f.get("problemSolved") || ""}`.trim(), lessons_learned: `${f.get("lessonsLearned") || ""}`.trim(), links: `${f.get("links") || ""}`.trim() ? [`${f.get("links")}`.trim()] : [], approved: false, featured: false, archived: false };
   if (screenshotFile instanceof File && screenshotFile.size > 0) {
     if (!ALLOWED_SCREENSHOT_TYPES.includes(screenshotFile.type)) { alert("Screenshot must be PNG, JPG/JPEG, or WebP."); return; }
@@ -197,9 +206,12 @@ async function login() {
       return;
     }
 
+    if (!body?.memberToken) {
+      throw new Error("Missing member session token");
+    }
     state.adminToken = "";
-    state.memberToken = "";
-    sessionStorage.removeItem("promptPourMemberToken");
+    state.memberToken = body.memberToken;
+    sessionStorage.setItem("promptPourMemberToken", state.memberToken);
     sessionStorage.removeItem("promptPourAdminToken");
     state.adminPending = [];
     state.adminApproved = [];
@@ -207,19 +219,20 @@ async function login() {
     state.role = "member";
     state.loggedIn = true;
     setRoute("dashboard");
-  } catch (_error) {
+  } catch (error) {
     state.adminToken = "";
-    state.memberToken = body.memberToken || "";
-    sessionStorage.setItem("promptPourMemberToken", state.memberToken);
+    state.memberToken = "";
+    sessionStorage.removeItem("promptPourMemberToken");
     sessionStorage.removeItem("promptPourAdminToken");
     state.adminPending = [];
     state.adminApproved = [];
     state.adminArchived = [];
     state.loginError = "That passphrase did not open the door.";
+    console.error("[Prompt & Pour] Login failed.", error);
     render();
   }
 }
-function logout() { state.loggedIn = false; state.role = "member"; state.loginError = ""; state.memberToken = ""; sessionStorage.removeItem("promptPourMemberToken"); setRoute("login"); }
+function logout() { state.loggedIn = false; state.role = "member"; state.loginError = ""; state.memberToken = ""; state.adminToken = ""; sessionStorage.removeItem("promptPourMemberToken"); sessionStorage.removeItem("promptPourAdminToken"); setRoute("login"); }
 function setCategoryFilter(v) { state.selectedCategory = v; render(); }
 function setStatusFilter(v) { state.selectedStatus = v; render(); }
 function render() { const app = document.getElementById("app"); if (!app) return; if (!state.loggedIn) app.innerHTML = loginPage(); else { const pages = { dashboard: dashboardPage, gallery: galleryPage, share: sharePage, admin: adminPage, rules: rulesPage, project: projectDetailPage }; app.innerHTML = `<div class="layout">${topNav()}<main class="main">${(pages[state.route] || dashboardPage)()}</main>${dataStatusPill()}</div>`; } }
