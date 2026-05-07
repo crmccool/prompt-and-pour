@@ -293,7 +293,7 @@ form { display: grid; gap: 0.75rem; }
 
 .login-card {
   width: min(420px, 100%);
-  margin-right: clamp(0rem, 2vw, 1.5rem);
+  margin-right: clamp(1.25rem, 6vw, 5.5rem);
   background: linear-gradient(180deg, rgba(12, 21, 35, 0.88), rgba(8, 14, 24, 0.92));
   border: 1px solid rgba(184, 146, 82, 0.5);
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
