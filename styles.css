@@ -42,10 +42,7 @@ h1, h2, h3, .brand {
 .layout { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
 
 .topbar {
-  background-image: url("./deco-bartender-header.png");
-  background-repeat: no-repeat;
-  background-position: right center;
-  background-size: auto 100%;
+  background: #0a1423;
   border-bottom: 1px solid rgba(184, 146, 82, 0.45);
   height: 280px;
   min-height: 280px;
@@ -55,6 +52,25 @@ h1, h2, h3, .brand {
   top: 0;
   z-index: 20;
   overflow: hidden;
+}
+
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(10, 20, 35, 1) 0%, rgba(10, 20, 35, 1) 46%, rgba(10, 20, 35, 0.92) 58%, rgba(10, 20, 35, 0) 72%);
+  z-index: 0;
+}
+
+.topbar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("./deco-bartender-header.png");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: auto 100%;
+  z-index: 0;
 }
 
 .topbar-brand-row,
@@ -71,7 +87,7 @@ h1, h2, h3, .brand {
   align-items: center;
   justify-content: flex-start;
   min-height: 100%;
-  padding: 0.5rem 0.2rem;
+  padding: 0.2rem 0.2rem;
 }
 
 .topbar-menu {
@@ -99,7 +115,8 @@ h1, h2, h3, .brand {
 .brand-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  justify-content: center;
+  gap: 0.6rem;
   max-width: min(62%, 680px);
   color: var(--gold-soft);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), 0 0 1px rgba(0, 0, 0, 0.6);
@@ -134,8 +151,6 @@ h1, h2, h3, .brand {
   .topbar {
     height: 260px;
     min-height: 260px;
-    background-position: right center;
-    background-size: auto 100%;
   }
 
   .topbar-menu {
@@ -147,8 +162,6 @@ h1, h2, h3, .brand {
   .topbar {
     height: 220px;
     min-height: 220px;
-    background-position: right center;
-    background-size: auto 100%;
   }
 
   .topbar-menu {
@@ -397,7 +410,7 @@ form { display: grid; gap: 0.75rem; }
   }
   .topbar-brand-row {
     gap: 0.6rem;
-    padding-block: 0.35rem 0.5rem;
+    padding-block: 0.2rem;
   }
   .topbar-nav-row {
     margin-top: 0.5rem;
