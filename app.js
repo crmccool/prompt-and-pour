@@ -113,8 +113,8 @@ function dashboardPage() {
   const favorites = approved.filter((p) => p.featured === true);
   const fresh = approved.filter((p) => p.featured !== true);
 
-  const favoritesSection = `<section class="panel section-featured dashboard-favorites"><h2 class="section-title">House Favorites</h2><div class="grid favorites-grid">${favorites.map(projectCard).join("") || "<p class=\"muted\">No house favorites yet.</p>"}</div></section>`;
-  const freshSection = `<section class="panel dashboard-fresh"><h2 class="section-title">Fresh Pours</h2><div class="grid fresh-grid">${fresh.map(projectCard).join("") || "<p>No approved pours yet.</p>"}</div></section>`;
+  const favoritesSection = `<section class="panel section-featured dashboard-favorites"><h2 class="section-title">Features</h2><div class="grid favorites-grid">${favorites.map(projectCard).join("") || "<p class=\"muted\">No features yet.</p>"}</div></section>`;
+  const freshSection = `<section class="panel dashboard-fresh"><h2 class="section-title">Freshly Mixed</h2><div class="grid fresh-grid">${fresh.map(projectCard).join("") || "<p>No approved pours yet.</p>"}</div></section>`;
 
   return `<div class="dashboard-layout ${favorites.length ? "has-favorites" : "no-favorites"}">${freshSection}${favoritesSection}</div>`;
 }
