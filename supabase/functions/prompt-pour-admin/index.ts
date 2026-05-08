@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type AdminAction = "list_pending" | "list_approved" | "list_archived" | "approve" | "archive" | "restore" | "feature" | "unfeature" | "edit_pour";
+type AdminAction = "list_pending" | "list_approved" | "list_archived" | "approve" | "archive" | "restore" | "feature" | "unfeature" | "edit_pour" | "list_events" | "create_event" | "update_event" | "delete_event";
 
 type AdminTokenPayload = {
   role: string;
@@ -158,10 +158,42 @@ Deno.serve(async (req) => {
     if (error) return jsonResponse(500, { error: error.message });
     return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, (data || []) as Record<string, unknown>[]) });
   }
+  if (action === "list_events") {
+    const { data, error } = await supabase
+      .from("prompt_pour_events")
+      .select("*")
+      .order("event_date", { ascending: true })
+      .order("start_time", { ascending: true });
+    if (error) return jsonResponse(500, { error: error.message });
+    return jsonResponse(200, { rows: data || [] });
+  }
+  if (action === "create_event") {
+    const updates = payload.updates;
+    if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
+      return jsonResponse(400, { error: "Missing event payload." });
+    }
+    const { data, error } = await supabase.from("prompt_pour_events").insert(updates).select("*").single();
+    if (error) return jsonResponse(500, { error: error.message });
+    return jsonResponse(200, { row: data });
+  }
 
   const id = payload.id;
   if (!id) {
     return jsonResponse(400, { error: "Missing id for action." });
+  }
+  if (action === "update_event") {
+    const updates = payload.updates;
+    if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
+      return jsonResponse(400, { error: "Missing event payload." });
+    }
+    const { data, error } = await supabase.from("prompt_pour_events").update(updates).eq("id", id).select("*").single();
+    if (error) return jsonResponse(500, { error: error.message });
+    return jsonResponse(200, { row: data });
+  }
+  if (action === "delete_event") {
+    const { error } = await supabase.from("prompt_pour_events").delete().eq("id", id);
+    if (error) return jsonResponse(500, { error: error.message });
+    return jsonResponse(200, { ok: true });
   }
 
   if (action === "edit_pour") {
