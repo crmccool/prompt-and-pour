@@ -43,34 +43,20 @@ h1, h2, h3, .brand {
 
 .topbar {
   background:
-    linear-gradient(90deg, rgba(6, 10, 17, 0.97) 0%, rgba(6, 10, 17, 0.94) 48%, rgba(6, 10, 17, 0.74) 66%, rgba(6, 10, 17, 0.5) 100%),
-    linear-gradient(180deg, rgba(6, 10, 17, 0.97), rgba(10, 16, 27, 0.95));
-  background-position: left top, left top;
-  background-size: 100% 100%, 100% 100%;
+    linear-gradient(90deg, rgba(6, 10, 17, 0.84) 0%, rgba(6, 10, 17, 0.8) 40%, rgba(6, 10, 17, 0.45) 66%, rgba(6, 10, 17, 0.2) 100%),
+    linear-gradient(180deg, rgba(6, 10, 17, 0.2), rgba(10, 16, 27, 0.42)),
+    url("./deco-bartender-header.png");
+  background-position: left top, left top, center top;
+  background-size: 100% 100%, 100% 100%, cover;
   background-repeat: no-repeat;
   border-bottom: 1px solid rgba(184, 146, 82, 0.45);
-  min-height: 180px;
+  min-height: 220px;
   padding: 0.8rem 1rem 1rem;
   position: relative;
   position: sticky;
   top: 0;
   z-index: 20;
   overflow: hidden;
-}
-
-.topbar-art {
-  position: absolute;
-  right: 32px;
-  top: 0;
-  height: 100%;
-  width: min(540px, 56vw);
-  object-fit: cover;
-  object-position: right center;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.9;
-  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.74) 24%, rgba(0, 0, 0, 1) 48%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.74) 24%, rgba(0, 0, 0, 1) 48%);
 }
 
 .topbar-brand-row,
@@ -94,6 +80,7 @@ h1, h2, h3, .brand {
   max-width: 1100px;
   margin: 0.65rem auto 0;
   padding: 0 0.2rem;
+  max-width: min(1100px, calc(100% - min(35vw, 420px)));
 }
 
 .brand {
@@ -136,6 +123,34 @@ h1, h2, h3, .brand {
   text-transform: uppercase;
   letter-spacing: 0.22em;
   color: rgba(210, 185, 130, 0.92);
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    min-height: 190px;
+    background-position: left top, left top, 70% top;
+    background-size: 100% 100%, 100% 100%, auto 100%;
+  }
+
+  .topbar-nav-row {
+    max-width: 1100px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    min-height: 170px;
+    background:
+      linear-gradient(90deg, rgba(6, 10, 17, 0.94) 0%, rgba(6, 10, 17, 0.88) 56%, rgba(6, 10, 17, 0.62) 100%),
+      linear-gradient(180deg, rgba(6, 10, 17, 0.24), rgba(10, 16, 27, 0.52)),
+      url("./deco-bartender-header.png");
+    background-position: left top, left top, 80% top;
+    background-size: 100% 100%, 100% 100%, auto 100%;
+  }
+
+  .brand-line {
+    gap: 0.35rem;
+  }
 }
 
 .brand-secondary {
@@ -369,12 +384,8 @@ form { display: grid; gap: 0.75rem; }
   .split { grid-template-columns: 1fr; }
   .hero::before { inset-inline: 8%; }
   .topbar {
-    min-height: 168px;
+    min-height: 170px;
     padding-inline: 0.7rem;
-  }
-  .topbar-art {
-    width: min(340px, 56vw);
-    opacity: 0.5;
   }
   .topbar-brand-row {
     gap: 0.6rem;
