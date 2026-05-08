@@ -42,13 +42,13 @@ h1, h2, h3, .brand {
 .layout { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
 
 .topbar {
-  background:
-    url("./deco-bartender-header.png");
-  background-position: right top;
-  background-size: cover;
+  background-image: url("./deco-bartender-header.png");
   background-repeat: no-repeat;
+  background-position: right center;
+  background-size: auto 100%;
   border-bottom: 1px solid rgba(184, 146, 82, 0.45);
-  min-height: 210px;
+  height: 148px;
+  min-height: 148px;
   padding: 0.9rem 1rem 0.9rem;
   position: relative;
   position: sticky;
@@ -75,7 +75,7 @@ h1, h2, h3, .brand {
 
 .topbar-menu {
   position: sticky;
-  top: 210px;
+  top: 148px;
   z-index: 19;
   border-bottom: 1px solid rgba(184, 146, 82, 0.32);
   background: linear-gradient(180deg, rgba(11, 19, 31, 0.98), rgba(10, 16, 27, 0.98));
@@ -131,25 +131,27 @@ h1, h2, h3, .brand {
 
 @media (max-width: 900px) {
   .topbar {
-    min-height: 185px;
-    background-position: 72% top;
+    height: 148px;
+    min-height: 148px;
+    background-position: right center;
     background-size: auto 100%;
   }
 
   .topbar-menu {
-    top: 185px;
+    top: 148px;
   }
 }
 
 @media (max-width: 640px) {
   .topbar {
-    min-height: 170px;
-    background-position: 80% top;
+    height: 136px;
+    min-height: 136px;
+    background-position: right center;
     background-size: auto 100%;
   }
 
   .topbar-menu {
-    top: 170px;
+    top: 136px;
   }
 
   .brand-line {
@@ -388,7 +390,8 @@ form { display: grid; gap: 0.75rem; }
   .split { grid-template-columns: 1fr; }
   .hero::before { inset-inline: 8%; }
   .topbar {
-    min-height: 170px;
+    height: 136px;
+    min-height: 136px;
     padding-inline: 0.7rem;
   }
   .topbar-brand-row {
