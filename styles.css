@@ -759,24 +759,26 @@ form { display: grid; gap: 0.75rem; }
 
 .house-rules-list {
   display: grid;
-  gap: 0.8rem;
+  gap: 1.05rem;
 }
 
 .house-rule-item {
-  padding: 0.95rem 1rem;
+  padding: 1.25rem 1.2rem;
 }
 
 .house-rule-heading {
   margin: 0;
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-size: clamp(1.25rem, 2.75vw, 1.5rem);
+  text-align: center;
   color: var(--gold-soft);
 }
 
 .house-rule-body {
-  margin: 0.5rem 0 0;
+  margin: 0.8rem 0 0;
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   color: var(--text);
   line-height: 1.55;
+  text-align: left;
 }
 
 @media (max-width: 640px) {
@@ -785,6 +787,6 @@ form { display: grid; gap: 0.75rem; }
   }
 
   .house-rule-item {
-    padding: 0.85rem;
+    padding: 1.1rem 1rem;
   }
 }
