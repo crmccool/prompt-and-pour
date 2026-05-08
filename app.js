@@ -215,7 +215,32 @@ function adminPage() {
   return `<section class="panel hero"><h1 class="section-title">Admin Dashboard</h1><div class="admin-toolbar"><button class="button" onclick="refreshAdminLists()">Refresh</button><button class="button" onclick="clearAdminSession()">Lock</button></div><div class="admin-toolbar admin-tabs">${adminViewTab("pending", "Pending Pours", state.adminPending.length)}${adminViewTab("approved", "Approved Pours", state.adminApproved.length)}${adminViewTab("archived", "Archived Pours", state.adminArchived.length)}</div>${state.adminEditSuccess ? `<p class="muted"><strong>${state.adminEditSuccess}</strong></p>` : ""}${state.adminLoading ? "<p class='muted'>Loading moderation lists...</p>" : ""}${adminSectionForView()}${adminEventsSection()}</section>`;
 }
 
-function rulesPage() { return `<section class="panel"><h1>House Rules</h1><p class="rule-quote">No empty glasses.</p></section>`; }
+function rulesPage() {
+  const rules = [
+    {
+      heading: "Keep It Low-Risk",
+      body: "Only bring low-risk information into the room: material that poses little to no risk if shared. Do not post patient information, protected health information, confidential institutional details, credentials, private records, internal-only strategy, or anything else that could bring the fuzz to the door — or shut the speakeasy down.",
+    },
+    {
+      heading: "Be a Good Regular",
+      body: "Keep it collegial. Share generously, respond constructively, and treat every pour as a chance to help another colleague get better at the craft.",
+    },
+    {
+      heading: "Make the Pour Useful",
+      body: "Share prompts, workflows, lessons learned, screenshots, examples, or practical tips that someone else could actually try, adapt, or learn from.",
+    },
+    {
+      heading: "Tip Your Bartender",
+      body: "If a prompt, build, or idea came from someone else — a colleague, source, tool, or template — give credit where it’s due.",
+    },
+    {
+      heading: "When in Doubt, Keep It Corked",
+      body: "If you are not sure whether something is safe to share, do not post it yet. Pause, check, and come back when you know it belongs here.",
+    },
+  ];
+
+  return `<section class="panel hero house-rules-panel"><h1 class="section-title">House Rules</h1><p class="house-rules-intro">Before you share a new pour, mind the rules of the room. Prompt &amp; Pour is built for practical exchange — not private business, sensitive records, or anything that belongs behind a locked door.</p><div class="house-rules-list">${rules.map((rule, index) => `<article class="card house-rule-item"><h2 class="house-rule-heading">Rule ${index + 1}: ${rule.heading}</h2><p class="house-rule-body">${rule.body}</p></article>`).join("")}</div></section>`;
+}
 async function login() {
   const passphrase = document.getElementById("access-passphrase-input")?.value?.trim();
   if (!passphrase) return;
