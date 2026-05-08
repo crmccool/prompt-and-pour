@@ -790,3 +790,33 @@ form { display: grid; gap: 0.75rem; }
     padding: 1.1rem 1rem;
   }
 }
+
+
+.member-view-details {
+  margin-top: 0.9rem;
+}
+
+.member-project-detail {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.member-project-detail .detail-back {
+  justify-self: start;
+}
+
+.member-project-detail .member-detail-field {
+  padding: 0.85rem;
+  background: linear-gradient(180deg, rgba(11, 16, 26, 0.92), rgba(7, 11, 20, 0.96));
+  border: 1px solid rgba(184, 146, 82, 0.26);
+  border-radius: 0.45rem;
+}
+
+.member-project-detail .member-screenshot {
+  max-height: 520px;
+  width: 100%;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.35);
+}
