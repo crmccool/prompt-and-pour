@@ -277,6 +277,31 @@ input[type="file"]::file-selector-button {
 }
 .hero p { max-width: 72ch; margin-inline: auto; }
 .hero .button { display: block; margin: 1.1rem auto 0; }
+.checkbox-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin-top: 1rem;
+}
+.checkbox-row input[type="checkbox"] {
+  margin-top: 0.3rem;
+  width: auto;
+}
+.inline-link-button {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--gold-bright);
+  cursor: pointer;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  text-decoration: underline;
+}
+.inline-link-button:hover,
+.inline-link-button:focus-visible {
+  color: #f5d796;
+}
 
 .muted { color: var(--muted); }
 .callout { border-left: 2px solid var(--gold); }
