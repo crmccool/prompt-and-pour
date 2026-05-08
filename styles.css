@@ -43,15 +43,13 @@ h1, h2, h3, .brand {
 
 .topbar {
   background:
-    linear-gradient(90deg, rgba(6, 10, 17, 0.84) 0%, rgba(6, 10, 17, 0.8) 40%, rgba(6, 10, 17, 0.45) 66%, rgba(6, 10, 17, 0.2) 100%),
-    linear-gradient(180deg, rgba(6, 10, 17, 0.2), rgba(10, 16, 27, 0.42)),
     url("./deco-bartender-header.png");
-  background-position: left top, left top, center top;
-  background-size: 100% 100%, 100% 100%, cover;
+  background-position: right top;
+  background-size: cover;
   background-repeat: no-repeat;
   border-bottom: 1px solid rgba(184, 146, 82, 0.45);
-  min-height: 220px;
-  padding: 0.8rem 1rem 1rem;
+  min-height: 210px;
+  padding: 0.9rem 1rem 0.9rem;
   position: relative;
   position: sticky;
   top: 0;
@@ -73,14 +71,20 @@ h1, h2, h3, .brand {
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 0.2rem 0.65rem;
-  border-bottom: 1px solid rgba(184, 146, 82, 0.35);
+}
+
+.topbar-menu {
+  position: sticky;
+  top: 210px;
+  z-index: 19;
+  border-bottom: 1px solid rgba(184, 146, 82, 0.32);
+  background: linear-gradient(180deg, rgba(11, 19, 31, 0.98), rgba(10, 16, 27, 0.98));
 }
 
 .topbar-nav-row {
   max-width: 1100px;
-  margin: 0.65rem auto 0;
-  padding: 0 0.2rem;
-  max-width: min(1100px, calc(100% - min(35vw, 420px)));
+  margin: 0 auto;
+  padding: 0.6rem 0.2rem;
 }
 
 .brand {
@@ -96,7 +100,7 @@ h1, h2, h3, .brand {
   flex-direction: column;
   gap: 0.52rem;
   color: var(--gold-soft);
-  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.38);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), 0 0 1px rgba(0, 0, 0, 0.6);
   position: relative;
   z-index: 1;
 }
@@ -127,25 +131,25 @@ h1, h2, h3, .brand {
 
 @media (max-width: 900px) {
   .topbar {
-    min-height: 190px;
-    background-position: left top, left top, 70% top;
-    background-size: 100% 100%, 100% 100%, auto 100%;
+    min-height: 185px;
+    background-position: 72% top;
+    background-size: auto 100%;
   }
 
-  .topbar-nav-row {
-    max-width: 1100px;
+  .topbar-menu {
+    top: 185px;
   }
 }
 
 @media (max-width: 640px) {
   .topbar {
     min-height: 170px;
-    background:
-      linear-gradient(90deg, rgba(6, 10, 17, 0.94) 0%, rgba(6, 10, 17, 0.88) 56%, rgba(6, 10, 17, 0.62) 100%),
-      linear-gradient(180deg, rgba(6, 10, 17, 0.24), rgba(10, 16, 27, 0.52)),
-      url("./deco-bartender-header.png");
-    background-position: left top, left top, 80% top;
-    background-size: 100% 100%, 100% 100%, auto 100%;
+    background-position: 80% top;
+    background-size: auto 100%;
+  }
+
+  .topbar-menu {
+    top: 170px;
   }
 
   .brand-line {
