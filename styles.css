@@ -60,7 +60,7 @@ h1, h2, h3, .brand {
 
 .topbar-art {
   position: absolute;
-  right: 0;
+  right: 32px;
   top: 0;
   height: 100%;
   width: min(540px, 56vw);
