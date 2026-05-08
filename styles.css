@@ -49,7 +49,8 @@ h1, h2, h3, .brand {
   background-size: 100% 100%, 100% 100%;
   background-repeat: no-repeat;
   border-bottom: 1px solid rgba(184, 146, 82, 0.45);
-  padding: 0.65rem 1rem 0.85rem;
+  min-height: 180px;
+  padding: 0.8rem 1rem 1rem;
   position: relative;
   position: sticky;
   top: 0;
@@ -59,17 +60,17 @@ h1, h2, h3, .brand {
 
 .topbar-art {
   position: absolute;
-  right: 12px;
+  right: 0;
   top: 0;
   height: 100%;
-  width: min(460px, 46vw);
+  width: min(540px, 56vw);
   object-fit: cover;
   object-position: right center;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.88;
-  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.7) 28%, rgba(0, 0, 0, 1) 52%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.7) 28%, rgba(0, 0, 0, 1) 52%);
+  opacity: 0.9;
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.74) 24%, rgba(0, 0, 0, 1) 48%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.74) 24%, rgba(0, 0, 0, 1) 48%);
 }
 
 .topbar-brand-row,
@@ -368,10 +369,11 @@ form { display: grid; gap: 0.75rem; }
   .split { grid-template-columns: 1fr; }
   .hero::before { inset-inline: 8%; }
   .topbar {
+    min-height: 168px;
     padding-inline: 0.7rem;
   }
   .topbar-art {
-    width: min(280px, 42vw);
+    width: min(340px, 56vw);
     opacity: 0.5;
   }
   .topbar-brand-row {
