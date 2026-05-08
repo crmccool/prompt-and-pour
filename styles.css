@@ -47,8 +47,8 @@ h1, h2, h3, .brand {
   background-position: right center;
   background-size: auto 100%;
   border-bottom: 1px solid rgba(184, 146, 82, 0.45);
-  height: 148px;
-  min-height: 148px;
+  height: 280px;
+  min-height: 280px;
   padding: 0.9rem 1rem 0.9rem;
   position: relative;
   position: sticky;
@@ -75,7 +75,7 @@ h1, h2, h3, .brand {
 
 .topbar-menu {
   position: sticky;
-  top: 148px;
+  top: 280px;
   z-index: 19;
   border-bottom: 1px solid rgba(184, 146, 82, 0.32);
   background: linear-gradient(180deg, rgba(11, 19, 31, 0.98), rgba(10, 16, 27, 0.98));
@@ -131,27 +131,27 @@ h1, h2, h3, .brand {
 
 @media (max-width: 900px) {
   .topbar {
-    height: 148px;
-    min-height: 148px;
+    height: 260px;
+    min-height: 260px;
     background-position: right center;
     background-size: auto 100%;
   }
 
   .topbar-menu {
-    top: 148px;
+    top: 260px;
   }
 }
 
 @media (max-width: 640px) {
   .topbar {
-    height: 136px;
-    min-height: 136px;
+    height: 220px;
+    min-height: 220px;
     background-position: right center;
     background-size: auto 100%;
   }
 
   .topbar-menu {
-    top: 136px;
+    top: 220px;
   }
 
   .brand-line {
