@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type AdminAction = "list_pending" | "list_approved" | "list_archived" | "approve" | "archive" | "restore" | "feature" | "unfeature" | "edit_pour" | "list_events" | "create_event" | "update_event" | "delete_event";
+type AdminAction = "list_pending" | "list_approved" | "list_archived" | "approve" | "archive" | "restore" | "feature" | "unfeature" | "edit_pour" | "list_events" | "create_event" | "update_event" | "delete_event" | "sign_admin_screenshots";
 
 type AdminTokenPayload = {
   role: string;
@@ -77,13 +77,43 @@ async function verifyAdminToken(token: string, signingSecret: string): Promise<A
 }
 
 
-async function attachSignedScreenshotUrls(supabase: ReturnType<typeof createClient>, rows: Record<string, unknown>[]) {
-  const paths = rows.map((row) => String(row.screenshot_url || "")).filter(Boolean);
-  if (!paths.length) return rows;
+function isAbsoluteHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+function toAbsoluteSignedUrl(supabaseUrl: string, value: string): string {
+  if (!value) return "";
+  return isAbsoluteHttpUrl(value) ? value : `${supabaseUrl}/storage/v1${value}`;
+}
+
+async function signScreenshotPaths(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  rawPaths: string[],
+): Promise<Record<string, string>> {
+  const paths = [...new Set(rawPaths.map((path) => path.trim()).filter((path) => path.startsWith("member-uploads/") && !isAbsoluteHttpUrl(path)))];
+  if (!paths.length) return {};
   const { data } = await supabase.storage.from("prompt-pour-screenshots").createSignedUrls(paths, 900);
-  const signedMap = new Map<string, string>();
-  data?.forEach((entry, idx) => signedMap.set(paths[idx], entry?.signedUrl || ""));
-  return rows.map((row) => ({ ...row, screenshot_signed_url: signedMap.get(String(row.screenshot_url || "")) || "" }));
+  const signed = Object.fromEntries(
+    (data || []).map((entry, idx) => [paths[idx], toAbsoluteSignedUrl(supabaseUrl, entry?.signedUrl || "")]),
+  );
+  return signed;
+}
+
+async function attachSignedScreenshotUrls(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  rows: Record<string, unknown>[],
+) {
+  const signedMap = await signScreenshotPaths(
+    supabase,
+    supabaseUrl,
+    rows.map((row) => String(row.screenshot_url || "")),
+  );
+  return rows.map((row) => ({
+    ...row,
+    screenshot_signed_url: signedMap[String(row.screenshot_url || "")] || "",
+  }));
 }
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -133,7 +163,7 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (error) return jsonResponse(500, { error: error.message });
-    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, (data || []) as Record<string, unknown>[]) });
+    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, supabaseUrl, (data || []) as Record<string, unknown>[]) });
   }
 
   if (action === "list_approved") {
@@ -145,7 +175,7 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (error) return jsonResponse(500, { error: error.message });
-    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, (data || []) as Record<string, unknown>[]) });
+    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, supabaseUrl, (data || []) as Record<string, unknown>[]) });
   }
 
   if (action === "list_archived") {
@@ -156,7 +186,15 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false });
 
     if (error) return jsonResponse(500, { error: error.message });
-    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, (data || []) as Record<string, unknown>[]) });
+    return jsonResponse(200, { rows: await attachSignedScreenshotUrls(supabase, supabaseUrl, (data || []) as Record<string, unknown>[]) });
+  }
+
+  if (action === "sign_admin_screenshots") {
+    const rawPaths = Array.isArray((payload as { paths?: unknown }).paths)
+      ? ((payload as { paths?: unknown }).paths as unknown[]).filter((value): value is string => typeof value === "string")
+      : [];
+    const signed = await signScreenshotPaths(supabase, supabaseUrl, rawPaths);
+    return jsonResponse(200, { signed });
   }
   if (action === "list_events") {
     const { data, error } = await supabase
