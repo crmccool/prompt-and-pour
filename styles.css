@@ -386,6 +386,21 @@ input[type="file"]::file-selector-button {
 .admin-tabs { margin: 0.75rem 0 1rem; }
 .admin-edit-form { display: grid; gap: 0.6rem; }
 .admin-edit-form textarea { min-height: 72px; }
+.admin-detail-panel {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+  display: grid;
+  gap: 0.8rem;
+}
+.admin-detail-panel .detail-back {
+  justify-self: start;
+}
+.admin-detail-panel .member-screenshot {
+  max-height: 620px;
+  width: 100%;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.35);
+}
 
 input, select, textarea {
   width: 100%;
