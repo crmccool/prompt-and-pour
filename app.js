@@ -58,7 +58,7 @@ function getMemberFunctionUrl() { const c = window.PROMPT_POUR_SUPABASE_CONFIG; 
 
 function mapRowToProject(row) { const screenshotPath = String(row.screenshot_url || "").trim(); const screenshotSignedUrl = String(row.screenshot_signed_url || "").trim(); return { id: row.id, title: row.title || "Untitled Pour", summary: row.summary || "", creatorName: row.creator_name || "Anonymous", contactEmail: row.creator_email || row.contact_email || "", categories: Array.isArray(row.categories) && row.categories.length ? row.categories : ["Other / Not sure"], status: row.status || "Idea", toolsUsed: Array.isArray(row.tools_used) ? row.tools_used.join(", ") : row.tools_used || "", problemSolved: row.problem_statement || "", howAiHelped: row.ai_use || "", lessonsLearned: row.lessons_learned || "", helpWanted: row.help_wanted || "", reusableBits: row.reusable_bits || "", links: Array.isArray(row.links) ? row.links : [], screenshotPath, screenshotSignedUrl, screenshotUrl: screenshotSignedUrl || screenshotPath || "", screenshotPlaceholder: "Screenshot placeholder", reusePermission: row.reuse_permission || "", createdDate: (row.created_at || "").slice(0, 10), updatedDate: (row.updated_at || row.created_at || "").slice(0, 10), approved: !!row.approved, featured: !!row.featured, archived: !!row.archived }; }
 
-async function loadProjects() { const s = await getSupabaseClient(); if (!s) return render(); try { const { data, error } = await s.from("prompt_pour_pours").select("*").eq("approved", true).eq("archived", false).order("created_at", { ascending: false }); if (error) { state.dataStatusReason = `Supabase query failed: ${error.message}`; console.error("[Prompt & Pour] Failed to load approved pours from Supabase.", error); render(); return; } state.projects = data.map(mapRowToProject); await signMemberScreenshotUrls(state.projects); state.dataSource = "supabase"; state.dataStatusReason = "Supabase connected."; } catch (error) { state.dataStatusReason = "Supabase request failed."; console.error("[Prompt & Pour] Unexpected error while loading projects.", error); } render(); }
+async function loadProjects() { const s = await getSupabaseClient(); if (!s) return render(); try { const { data, error } = await s.from("prompt_pour_pours").select("*").eq("approved", true).eq("archived", false).order("created_at", { ascending: false }); if (error) { state.dataStatusReason = `Supabase query failed: ${error.message}`; console.error("[Prompt & Pour] Failed to load approved pours from Supabase.", error); render(); return; } state.projects = data.map(mapRowToProject); await signMemberScreenshotUrls(state.projects); if (state.adminToken) await signAdminScreenshotUrls(state.projects); state.dataSource = "supabase"; state.dataStatusReason = "Supabase connected."; } catch (error) { state.dataStatusReason = "Supabase request failed."; console.error("[Prompt & Pour] Unexpected error while loading projects.", error); } render(); }
 
 function setRoute(route, projectId = null) { state.route = route === "admin" && state.role !== "admin" && !state.adminToken ? "dashboard" : route; state.selectedProjectId = null; if (route === "project" && projectId) state.selectedProjectId = projectId; render(); }
 function openProjectDetail(projectId) { state.selectedProjectId = projectId ? String(projectId) : null; render(); }
@@ -84,8 +84,13 @@ function getProjectScreenshotUrl(project) {
   if (isAbsoluteHttpUrl(project.screenshotPath)) return project.screenshotPath;
   return "";
 }
+function logScreenshotRenderDecision(project, shouldRenderScreenshot, context = "unknown") {
+  const title = String(project?.title || project?.name || "Untitled");
+  console.info("[Prompt & Pour][ScreenshotRender]", { context, title, hasScreenshotSignedUrl: isAbsoluteHttpUrl(project?.screenshotSignedUrl), hasScreenshotUrl: isAbsoluteHttpUrl(project?.screenshotUrl), hasScreenshotPath: !!String(project?.screenshotPath || "").trim(), shouldRenderScreenshot });
+}
 function memberCardScreenshot(project) {
   const thumbnailUrl = getProjectScreenshotUrl(project);
+  logScreenshotRenderDecision(project, !!thumbnailUrl, "member_card");
   return thumbnailUrl
     ? `<a class="member-card-screenshot-link" href="${escapeHtml(thumbnailUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full screenshot in new tab"><img class="member-card-screenshot" src="${escapeHtml(thumbnailUrl)}" alt="Submitted build screenshot" loading="lazy" decoding="async" /></a>`
     : "";
@@ -180,7 +185,7 @@ async function saveAdminEdit(id) {
 function adminField(label, value) { return value ? `<p><strong>${label}:</strong> ${value}</p>` : ""; }
 function adminListField(label, values) { return Array.isArray(values) && values.length ? adminField(label, values.join(", ")) : ""; }
 function adminLinksField(links) { return Array.isArray(links) && links.length ? `<p><strong>Links:</strong> ${links.map((link) => `<a href="${link}" target="_blank" rel="noreferrer">${link}</a>`).join("<br/>")}</p>` : ""; }
-function adminScreenshotField(project) { const screenshotUrl = getProjectScreenshotUrl(project); return screenshotUrl ? `<p><strong>Screenshot:</strong></p><a href="${escapeHtml(screenshotUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full screenshot in new tab"><img class="member-screenshot" src="${escapeHtml(screenshotUrl)}" alt="Submitted screenshot preview" loading="lazy" decoding="async" /></a>` : ""; }
+function adminScreenshotField(project) { const screenshotUrl = getProjectScreenshotUrl(project); logScreenshotRenderDecision(project, !!screenshotUrl, "admin_detail"); return screenshotUrl ? `<p><strong>Screenshot:</strong></p><a href="${escapeHtml(screenshotUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full screenshot in new tab"><img class="member-screenshot" src="${escapeHtml(screenshotUrl)}" alt="Submitted screenshot preview" loading="lazy" decoding="async" /></a>` : ""; }
 function adminCard(p, buttons, showExpandedDetails = false) {
   const fullDetails = [
     adminField("Problem Solved", p.problemSolved),
